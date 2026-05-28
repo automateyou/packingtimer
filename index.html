@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Packing Assistant</title>
+<style>
+  :root {
+    --sf-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    --sf-mono: ui-monospace, "SF Mono", Menlo, Monaco, "JetBrains Mono", monospace;
+    --accent: #d4a574;
+    --green: #6b9b7a;
+    --green-light: #8ec19c;
+    --bg-1: #1a1f2e;
+    --bg-0: #0a0d14;
+    --fg: #e8e4d8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg-0); }
+  body {
+    min-height: 100vh;
+    background: radial-gradient(ellipse at top, #1a1f2e 0%, #0a0d14 100%);
+    color: var(--fg);
+    font-family: var(--sf-display);
+    padding: 16px 16px 32px;
+    display: flex; flex-direction: column; align-items: center;
+    -webkit-font-smoothing: antialiased;
+  }
+  .sf-display { font-family: var(--sf-display); }
+  .sf-mono { font-family: var(--sf-mono); }
+
+  @keyframes pulse-ring { 0%,100% { opacity: 0.4; } 50% { opacity: 0.8; } }
+  .ring-active { animation: pulse-ring 2s ease-in-out infinite; }
+
+  .header { text-align: center; margin-bottom: 10px; }
+  .header-title {
+    font-family: var(--sf-mono); font-size: 10px;
+    letter-spacing: 0.3em; opacity: 0.5; margin-bottom: 4px;
+  }
+  .header-count {
+    font-family: var(--sf-mono); font-size: 11px; opacity: 0.6;
+  }
+
+  .circle-wrap { position: relative; width: 300px; height: 300px; margin-bottom: 10px; }
+  .circle-wrap svg.ring { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
+  .circle-center {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 0 30px; text-align: center;
+  }
+  .center-task-name {
+    font-size: 22px; font-weight: 700; line-height: 1.2;
+    margin-bottom: 4px; letter-spacing: -0.02em;
+  }
+  .center-task-name.group { font-size: 19px; }
+  .center-location {
+    font-family: var(--sf-mono); font-size: 11px; color: var(--accent);
+    opacity: 0.85; margin-bottom: 6px; letter-spacing: 0.02em;
+  }
+  .center-sub-list { margin: 2px 0 6px; max-width: 220px; }
+  .center-sub {
+    font-size: 11px; color: rgba(232,228,216,0.7); margin: 2px 0;
+    letter-spacing: -0.005em; display: flex; align-items: center;
+    gap: 6px; justify-content: center; cursor: pointer;
+  }
+  .center-sub.done {
+    text-decoration: line-through;
+    text-decoration-color: rgba(232,228,216,0.4);
+    opacity: 0.5;
+  }
+  .center-time {
+    font-family: var(--sf-mono); font-size: 34px; font-weight: 300;
+    letter-spacing: 0.02em; opacity: 0.85; margin-top: 4px;
+  }
+  .center-time.warn { color: var(--accent); }
+  .center-time.small { font-size: 26px; }
+
+  .controls {
+    display: flex; gap: 8px; margin-bottom: 16px;
+    flex-wrap: wrap; justify-content: center; align-items: center;
+  }
+
+  .circle-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; margin-bottom: 10px;
+  }
+  .nav-arrow {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(232,228,216,0.12);
+    color: rgba(232,228,216,0.7);
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.18s ease; flex-shrink: 0;
+  }
+  .nav-arrow:hover {
+    background: rgba(212,165,116,0.15);
+    border-color: rgba(212,165,116,0.5);
+    color: var(--accent);
+    transform: scale(1.06);
+  }
+  .nav-arrow[aria-disabled="true"] {
+    opacity: 0.25; cursor: default; transform: none;
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(232,228,216,0.12);
+    color: rgba(232,228,216,0.7);
+  }
+  .nav-arrow[aria-disabled="true"]:hover {
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(232,228,216,0.12);
+    color: rgba(232,228,216,0.7);
+    transform: none;
+  }
+  .kbd-hint {
+    font-family: var(--sf-mono); font-size: 9px;
+    letter-spacing: 0.2em; opacity: 0.4; margin-bottom: 14px;
+    text-align: center;
+  }
+  .kbd {
+    display: inline-block; padding: 1px 5px; border-radius: 3px;
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(232,228,216,0.15);
+    margin: 0 2px; font-size: 9px;
+  }
+  .btn {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(232,228,216,0.15);
+    color: var(--fg); padding: 12px 18px; border-radius: 999px; cursor: pointer;
+    font-family: var(--sf-display); font-size: 14px; font-weight: 500;
+    letter-spacing: -0.01em; transition: all 0.2s ease;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(232,228,216,0.3); }
+  .btn-primary { background: var(--accent); color: var(--bg-1); border-color: var(--accent); }
+  .btn-primary:hover { background: #e0b585; border-color: #e0b585; }
+  .btn-done {
+    background: rgba(107,155,122,0.15); border-color: rgba(107,155,122,0.5);
+    color: var(--green-light); padding: 12px;
+  }
+  .btn-done:hover { background: rgba(107,155,122,0.25); border-color: var(--green-light); color: #a8d4b3; }
+  .btn-icon { padding: 12px; }
+
+  .list-section { width: 100%; max-width: 460px; }
+  .list-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 8px; padding: 0 4px;
+  }
+  .list-label { font-family: var(--sf-mono); font-size: 10px; letter-spacing: 0.3em; opacity: 0.4; }
+  .add-btn {
+    background: transparent; border: 1px solid rgba(232,228,216,0.15);
+    color: rgba(232,228,216,0.7); cursor: pointer; font-size: 10px;
+    letter-spacing: 0.15em; padding: 5px 11px; border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 5px;
+    transition: all 0.2s ease; font-family: var(--sf-mono);
+  }
+  .add-btn:hover { background: rgba(255,255,255,0.06); color: var(--fg); }
+
+  .task-item {
+    padding: 6px 14px; border-radius: 10px; margin-bottom: 1px;
+    transition: background 0.4s ease, border-color 0.4s ease, opacity 0.4s ease;
+    border: 1px solid transparent; position: relative;
+  }
+  .task-current { background: rgba(212,165,116,0.08); border-color: rgba(212,165,116,0.3); }
+  .task-done { opacity: 0.32; }
+  .task-pending { opacity: 0.85; }
+
+  .task-main-row { display: flex; align-items: flex-start; gap: 12px; }
+  .task-body { flex: 1; min-width: 0; }
+  .task-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  .check-circle {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 1.5px solid rgba(232,228,216,0.3); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 3px; cursor: pointer; transition: border-color 0.2s ease;
+  }
+  .check-circle:hover { border-color: rgba(232,228,216,0.6); }
+  .check-circle.done { background: var(--green); border-color: var(--green); }
+  .check-circle.current { border-color: var(--accent); background: rgba(212,165,116,0.15); }
+
+  .check-small {
+    width: 15px; height: 15px; border-radius: 50%;
+    border: 1.5px solid rgba(232,228,216,0.3); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: border-color 0.2s ease;
+  }
+  .check-small:hover { border-color: rgba(232,228,216,0.6); }
+  .check-small.done { background: var(--green); border-color: var(--green); }
+
+  .task-name-text {
+    font-size: 15px; font-weight: 500; cursor: pointer;
+    padding: 2px 6px; margin: -2px -6px; border-radius: 6px;
+    transition: background 0.2s ease; letter-spacing: -0.01em;
+  }
+  .task-name-text.group { font-weight: 700; font-size: 16px; letter-spacing: -0.02em; }
+  .task-name-text:hover { background: rgba(255,255,255,0.06); }
+  .task-name-text.struck { text-decoration: line-through; text-decoration-color: rgba(232,228,216,0.4); }
+  .task-name-text.empty { opacity: 0.4; font-style: italic; }
+
+  .task-name-input {
+    font-family: var(--sf-display); font-size: 15px; font-weight: 500;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(212,165,116,0.4);
+    color: var(--fg); padding: 2px 6px; border-radius: 6px; outline: none;
+    width: 100%; max-width: 280px; letter-spacing: -0.01em;
+  }
+  .task-name-input.group { font-weight: 700; font-size: 16px; }
+
+  .sub-item-text {
+    font-size: 13px; cursor: pointer; padding: 1px 6px; margin-left: -6px;
+    border-radius: 4px; transition: background 0.2s ease; flex: 1;
+    letter-spacing: -0.005em;
+  }
+  .sub-item-text:hover { background: rgba(255,255,255,0.06); }
+  .sub-item-text.struck { text-decoration: line-through; text-decoration-color: rgba(232,228,216,0.4); opacity: 0.5; }
+  .sub-item-input {
+    font-family: var(--sf-display); font-size: 13px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(212,165,116,0.4);
+    color: var(--fg); padding: 1px 6px; border-radius: 4px; outline: none; flex: 1;
+  }
+
+  .pin-btn {
+    background: transparent; border: none; cursor: pointer; font-size: 14px;
+    padding: 2px 4px; border-radius: 6px; line-height: 1;
+    transition: background 0.2s ease, transform 0.2s ease; opacity: 0.6;
+  }
+  .pin-btn:hover { background: rgba(255,255,255,0.08); opacity: 1; transform: scale(1.15); }
+  .pin-btn.has-location { opacity: 1; }
+
+  /* Inline 📍 + location, all part of editable task text */
+  .pin-add {
+    cursor: pointer; opacity: 0.35; padding: 2px 6px; border-radius: 6px;
+    font-size: 14px; line-height: 1; transition: all 0.2s ease;
+  }
+  .pin-add:hover { opacity: 1; background: rgba(255,255,255,0.06); transform: scale(1.1); }
+
+  .pin-location-combo {
+    display: inline-flex; align-items: center; gap: 4px;
+    cursor: pointer; padding: 2px 8px; border-radius: 6px;
+    background: rgba(212,165,116,0.08);
+    transition: background 0.2s ease;
+    font-family: var(--sf-display); font-size: 12px;
+    color: var(--accent);
+  }
+  .pin-location-combo:hover { background: rgba(212,165,116,0.16); }
+  .location-text-inline {
+    font-family: var(--sf-mono); font-size: 11px;
+    letter-spacing: 0.02em; opacity: 0.95;
+  }
+  .pin-inline {
+    font-size: 14px; opacity: 0.9; line-height: 1; padding-left: 2px;
+  }
+
+  .location-text {
+    font-family: var(--sf-mono); font-size: 11px; letter-spacing: 0.02em;
+    color: var(--accent); opacity: 0.85; cursor: pointer;
+    padding: 1px 6px; border-radius: 4px; transition: background 0.2s ease;
+  }
+  .location-text:hover { background: rgba(212,165,116,0.1); }
+  .location-input {
+    font-family: var(--sf-mono); font-size: 11px; letter-spacing: 0.02em;
+    background: rgba(212,165,116,0.1); border: 1px solid rgba(212,165,116,0.4);
+    color: var(--accent); padding: 2px 6px; border-radius: 4px; outline: none; width: 200px;
+  }
+
+  .remove-btn {
+    background: transparent; border: none; color: rgba(232,228,216,0.3);
+    cursor: pointer; padding: 4px; border-radius: 6px; opacity: 0;
+    transition: all 0.2s ease; flex-shrink: 0;
+    display: flex; align-items: center;
+  }
+  .task-item:hover .remove-btn { opacity: 1; }
+  .sub-row:hover .remove-btn { opacity: 1; }
+  .remove-btn:hover { color: #d97a6c; background: rgba(217,122,108,0.1); }
+
+  .sub-row { display: flex; align-items: center; gap: 8px; padding: 1px 0 1px 30px; }
+
+  .sub-add {
+    background: transparent; border: none; color: rgba(232,228,216,0.45);
+    cursor: pointer; font-family: var(--sf-mono); font-size: 10px;
+    letter-spacing: 0.12em; padding: 3px 8px; margin-left: 24px; margin-top: 2px;
+    border-radius: 4px; transition: all 0.2s ease;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .sub-add:hover { color: var(--fg); background: rgba(255,255,255,0.04); }
+
+  .done-divider {
+    font-family: var(--sf-mono); font-size: 9px; letter-spacing: 0.3em;
+    opacity: 0.3; margin: 14px 4px 4px; text-align: left;
+  }
+
+  .footer-hint {
+    font-family: var(--sf-mono); font-size: 9px; opacity: 0.3;
+    margin-top: 20px; letter-spacing: 0.2em; text-align: center;
+  }
+
+  .suitcase-section { width: 100%; max-width: 460px; margin-top: 28px; }
+  .suitcase-svg { width: 100%; height: auto; display: block; }
+
+  /* Inline SVG icons */
+  .icon { width: 16px; height: 16px; flex-shrink: 0; }
+  .icon-sm { width: 12px; height: 12px; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- Inline SVG icon symbols -->
+<svg style="display:none">
+  <symbol id="i-play" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="6 3 20 12 6 21 6 3"/></symbol>
+  <symbol id="i-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="i-rotate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></symbol>
+  <symbol id="i-volume" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></symbol>
+  <symbol id="i-volume-mute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
+  <symbol id="i-chev-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></symbol>
+  <symbol id="i-chev-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></symbol>
+</svg>
+
+<script>
+'use strict';
+
+const TASK_DURATION = 5 * 60;
+
+const DEFAULT_TASKS = [
+  { type: 'item', name: "Lay out your suitcase", location: "" },
+  { type: 'item', name: "Empty your suitcase", location: "" },
+  { type: 'item', name: "Pack spare Xanax", location: "" },
+  { type: 'item', name: "Pack 4 bottled waters", location: "" },
+  { type: 'item', name: "Redwood keys", location: "" },
+  { type: 'item', name: "Diapers", location: "" },
+  { type: 'item', name: "ID etc", location: "" },
+  { type: 'group', name: "Snacks", location: "", items: [
+    { name: "Taro chips", done: false },
+    { name: "88 Acres bars", done: false },
+    { name: "Wooden forks", done: false },
+    { name: "Compostable bowls", done: false },
+  ]},
+  { type: 'group', name: "Meds", location: "", items: [
+    { name: "Mints", done: false },
+    { name: "Zofran", done: false },
+  ]},
+  { type: 'group', name: "Teas", location: "", items: [
+    { name: "Kettle", done: false },
+    { name: "Peppermint tea", done: false },
+    { name: "Olive leaf key", done: false },
+  ]},
+  { type: 'group', name: "Fanny pack", location: "", items: [
+    { name: "Shoulder massager", done: false },
+  ]},
+  { type: 'group', name: "Kitchen", location: "", items: [] },
+  { type: 'group', name: "Before leaving the home", location: "", items: [
+    { name: "Open Amazon packages", done: false },
+    { name: "Pack Amazon returns", done: false },
+    { name: "Charge massager", done: false },
+    { name: "Lock the door", done: false },
+  ]},
+];
+
+// ---- App State ----
+const state = {
+  tasks: DEFAULT_TASKS.map(t => t.type === 'group'
+    ? { ...t, items: t.items.map(it => ({ ...it })) }
+    : { ...t }),
+  ids: DEFAULT_TASKS.map((_, i) => i),
+  nextId: DEFAULT_TASKS.length,
+  completedIds: [],
+  timeLeft: TASK_DURATION,
+  isRunning: false,
+  hasStarted: false,
+  muted: false,
+  manualIdx: null, // when set, overrides "first active" as the displayed task
+  // edit state
+  editingNameIdx: null,
+  editingLocationIdx: null,
+  editingSub: { taskIdx: null, subIdx: null },
+};
+
+// refs
+let lastSpokenId = -1;
+let lastReminderTime = TASK_DURATION;
+let timerInterval = null;
+
+// ---- Derived ----
+function getOrder() {
+  const active = [], done = [];
+  state.ids.forEach((id, idx) => {
+    if (state.completedIds.includes(id)) done.push({ id, idx });
+    else active.push({ id, idx });
+  });
+  return { active, done };
+}
+
+function getCurrent() {
+  // If user manually navigated, use that
+  if (state.manualIdx !== null && state.manualIdx >= 0 && state.manualIdx < state.tasks.length) {
+    return { id: state.ids[state.manualIdx], idx: state.manualIdx, task: state.tasks[state.manualIdx] };
+  }
+  // Otherwise: first active (uncompleted) task
+  const { active } = getOrder();
+  if (!active.length) return null;
+  const entry = active[0];
+  return { id: entry.id, idx: entry.idx, task: state.tasks[entry.idx] };
+}
+
+function goToPrevTask() {
+  const cur = getCurrent();
+  if (!cur) return;
+  if (cur.idx > 0) {
+    state.manualIdx = cur.idx - 1;
+    state.timeLeft = TASK_DURATION;
+    lastReminderTime = TASK_DURATION;
+    checkSpeakOnTaskChange();
+    render();
+  }
+}
+
+function goToNextTask() {
+  const cur = getCurrent();
+  if (!cur) return;
+  if (cur.idx < state.tasks.length - 1) {
+    state.manualIdx = cur.idx + 1;
+    state.timeLeft = TASK_DURATION;
+    lastReminderTime = TASK_DURATION;
+    checkSpeakOnTaskChange();
+    render();
+  }
+}
+
+// ---- Speech ----
+function buildSpeechIntro(task) {
+  if (!task) return '';
+  if (task.type === 'group' && task.items && task.items.length) {
+    const items = task.items.map(it => it.name).join(', ');
+    return `${task.name}. ${items}.`;
+  }
+  return task.name || '';
+}
+
+function makeMotivation(taskName) {
+  const t = (taskName || '').toLowerCase();
+  const templates = [
+    `You've got this — ${t} and you're one step closer.`,
+    `Keep going. ${taskName} is happening right now.`,
+    `Stay with it. ${taskName} matters.`,
+    `Almost there — just ${t} and move on.`,
+    `Focus up. ${taskName}, then breathe.`,
+    `One thing at a time. Right now: ${t}.`,
+    `You're doing great. ${taskName} is in motion.`,
+    `Don't overthink it. Just ${t}.`,
+    `Trust the process. ${taskName} is the only thing right now.`,
+    `Small win incoming — ${t} and check it off.`,
+    `You started, so finish. ${taskName}.`,
+    `Steady hands. ${taskName}, nothing else.`,
+    `Momentum matters. ${taskName}, keep rolling.`,
+    `This is the move: ${t}. Lock in.`,
+    `Quiet the noise. ${taskName}.`,
+    `Progress over perfection — just ${t}.`,
+    `Every second counts. ${taskName}.`,
+    `You're capable. ${taskName} is well within reach.`,
+    `Half the battle is starting. ${taskName}.`,
+  ];
+  return templates[Math.floor(Math.random() * templates.length)];
+}
+
+function speak(text) {
+  if (!('speechSynthesis' in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.rate = 0.95; u.pitch = 1.0; u.volume = 1.0;
+    window.speechSynthesis.speak(u);
+  } catch (e) { console.error(e); }
+}
+
+// ---- Actions ----
+function startTimer() {
+  if (timerInterval) return;
+  timerInterval = setInterval(() => {
+    if (!state.isRunning) return;
+    state.timeLeft -= 1;
+    if (state.timeLeft <= 0) {
+      // auto advance
+      const cur = getCurrent();
+      if (cur && !state.completedIds.includes(cur.id)) {
+        state.completedIds.push(cur.id);
+      }
+      state.timeLeft = TASK_DURATION;
+      lastReminderTime = TASK_DURATION;
+      checkSpeakOnTaskChange();
+    } else {
+      const elapsed = TASK_DURATION - state.timeLeft;
+      if (state.isRunning && !state.muted && elapsed > 0 && elapsed % 15 === 0 && lastReminderTime !== state.timeLeft) {
+        lastReminderTime = state.timeLeft;
+        const cur = getCurrent();
+        if (cur) {
+          const m = Math.floor(state.timeLeft / 60), s = state.timeLeft % 60;
+          let timeStr;
+          if (m > 0 && s > 0) timeStr = `${m} minute${m !== 1 ? 's' : ''} and ${s} second${s !== 1 ? 's' : ''}`;
+          else if (m > 0) timeStr = `${m} minute${m !== 1 ? 's' : ''}`;
+          else timeStr = `${s} second${s !== 1 ? 's' : ''}`;
+          let extra = '';
+          if (cur.task.type === 'group') {
+            const rem = (cur.task.items || []).filter(it => !it.done).map(it => it.name);
+            if (rem.length) extra = ` Still need: ${rem.join(', ')}.`;
+          }
+          speak(`${cur.task.name}. ${timeStr} left.${extra} ${makeMotivation(cur.task.name)}`);
+        }
+      }
+    }
+    render();
+  }, 1000);
+}
+
+function checkSpeakOnTaskChange() {
+  const cur = getCurrent();
+  if (!cur) { lastSpokenId = -1; return; }
+  if (state.muted || !state.hasStarted) { lastSpokenId = cur.id; return; }
+  if (lastSpokenId === cur.id) return;
+  lastSpokenId = cur.id;
+  lastReminderTime = TASK_DURATION;
+  speak(buildSpeechIntro(cur.task));
+}
+
+function handleStart() {
+  const cur = getCurrent();
+  if (!cur) return;
+  if (!state.hasStarted) {
+    state.hasStarted = true;
+    lastSpokenId = cur.id;
+    if (!state.muted) speak(buildSpeechIntro(cur.task));
+  }
+  state.isRunning = true;
+  startTimer();
+  render();
+}
+
+function handlePause() {
+  state.isRunning = false;
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  render();
+}
+
+function handleMarkDone() {
+  const cur = getCurrent();
+  if (!cur) return;
+  if (!state.completedIds.includes(cur.id)) state.completedIds.push(cur.id);
+  state.manualIdx = null; // clear manual nav — return to auto "first active"
+  state.timeLeft = TASK_DURATION;
+  lastReminderTime = TASK_DURATION;
+  checkSpeakOnTaskChange();
+  render();
+}
+
+function toggleTaskDone(id) {
+  const cur = getCurrent();
+  const wasCurrent = cur && cur.id === id;
+  if (state.completedIds.includes(id)) {
+    state.completedIds = state.completedIds.filter(x => x !== id);
+  } else {
+    state.completedIds.push(id);
+  }
+  if (wasCurrent) {
+    state.timeLeft = TASK_DURATION;
+    lastReminderTime = TASK_DURATION;
+    checkSpeakOnTaskChange();
+  }
+  render();
+}
+
+function handleReset() {
+  state.isRunning = false;
+  state.completedIds = [];
+  state.timeLeft = TASK_DURATION;
+  state.hasStarted = false;
+  state.manualIdx = null;
+  state.tasks.forEach(t => {
+    if (t.type === 'group') t.items.forEach(it => it.done = false);
+  });
+  lastSpokenId = -1;
+  lastReminderTime = TASK_DURATION;
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+  render();
+}
+
+function handleRepeat() {
+  const cur = getCurrent();
+  if (cur && !state.muted) speak(buildSpeechIntro(cur.task));
+}
+
+function toggleMute() {
+  state.muted = !state.muted;
+  if (state.muted && 'speechSynthesis' in window) window.speechSynthesis.cancel();
+  render();
+}
+
+function updateTaskName(idx, name) { state.tasks[idx].name = name; render(); }
+function updateTaskLocation(idx, location) { state.tasks[idx].location = location; render(); }
+function updateSubName(idx, j, name) { state.tasks[idx].items[j].name = name; render(); }
+
+function toggleSub(idx, j) {
+  const task = state.tasks[idx];
+  if (!task || task.type !== 'group') return;
+  task.items[j].done = !task.items[j].done;
+  // If this is the current task and ALL sub-items are now done, auto-complete the group
+  const cur = getCurrent();
+  if (cur && cur.idx === idx && task.items.length > 0 && task.items.every(it => it.done)) {
+    setTimeout(() => {
+      if (!state.completedIds.includes(state.ids[idx])) {
+        state.completedIds.push(state.ids[idx]);
+        state.timeLeft = TASK_DURATION;
+        lastReminderTime = TASK_DURATION;
+        checkSpeakOnTaskChange();
+        render();
+      }
+    }, 250);
+  }
+  render();
+}
+
+function addSubItem(idx) {
+  const task = state.tasks[idx];
+  if (!task || task.type !== 'group') return;
+  task.items.push({ name: "", done: false });
+  state.editingSub = { taskIdx: idx, subIdx: task.items.length - 1 };
+  render();
+}
+
+function removeSubItem(idx, j) {
+  state.tasks[idx].items.splice(j, 1);
+  render();
+}
+
+function addTask() {
+  const newId = state.nextId++;
+  state.tasks.push({ type: 'item', name: "", location: "" });
+  state.ids.push(newId);
+  state.editingNameIdx = state.tasks.length - 1;
+  render();
+}
+
+function removeTask(idx) {
+  const removedId = state.ids[idx];
+  state.tasks.splice(idx, 1);
+  state.ids.splice(idx, 1);
+  state.completedIds = state.completedIds.filter(x => x !== removedId);
+  render();
+}
+
+// ---- Render helpers ----
+function icon(id, size) {
+  const sz = size || 16;
+  return `<svg class="icon" style="width:${sz}px;height:${sz}px" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+}
+
+function escapeHtml(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  })[c]);
+}
+
+function renderTaskRow(task, idx, isCurrent, isDone) {
+  const isEditingName = state.editingNameIdx === idx;
+  const isEditingLoc = state.editingLocationIdx === idx;
+  const isGroup = task.type === 'group';
+
+  let html = `<div class="task-item ${isCurrent ? 'task-current' : isDone ? 'task-done' : 'task-pending'}" data-idx="${idx}">`;
+  html += `<div class="task-main-row">`;
+
+  // Check circle
+  html += `<div class="check-circle ${isDone ? 'done' : isCurrent ? 'current' : ''}" data-action="toggle-task" data-idx="${idx}" title="Toggle done">`;
+  if (isDone) html += `<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="#1a1f2e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+  html += `</div>`;
+
+  html += `<div class="task-body">`;
+  html += `<div class="task-row">`;
+
+  if (isEditingName) {
+    html += `<input autofocus class="task-name-input ${isGroup ? 'group' : ''}" data-action="edit-name" data-idx="${idx}" value="${escapeHtml(task.name)}" />`;
+  } else {
+    const struck = isDone ? 'struck' : '';
+    const empty = !task.name ? 'empty' : '';
+    const display = task.name ? escapeHtml(task.name) + (isGroup ? ':' : '') : 'untitled';
+    html += `<span class="task-name-text ${isGroup ? 'group' : ''} ${struck} ${empty}" data-action="start-edit-name" data-idx="${idx}" title="Click to edit">${display}</span>`;
+  }
+
+  // Inline pin + location all in one row, all editable
+  if (isEditingLoc) {
+    html += `<span class="pin-inline">📍</span>`;
+    html += `<input autofocus class="location-input" data-action="edit-location" data-idx="${idx}" value="${escapeHtml(task.location)}" placeholder="where is it?" />`;
+  } else if (task.location) {
+    // Location exists — show 📍 + text together, click to edit
+    html += `<span class="pin-location-combo" data-action="toggle-location-edit" data-idx="${idx}" title="Click to edit location">📍 <span class="location-text-inline">${escapeHtml(task.location)}</span></span>`;
+  } else {
+    // No location — show faint 📍 to add one
+    html += `<span class="pin-add" data-action="toggle-location-edit" data-idx="${idx}" title="Add location">📍</span>`;
+  }
+
+  html += `</div>`;
+  html += `</div>`; // task-body
+
+  html += `<button class="remove-btn" data-action="remove-task" data-idx="${idx}" title="Remove task"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+
+  html += `</div>`; // main-row
+
+  if (isGroup) {
+    html += `<div style="margin-top:4px">`;
+    task.items.forEach((sub, j) => {
+      const isEditingThis = state.editingSub.taskIdx === idx && state.editingSub.subIdx === j;
+      html += `<div class="sub-row">`;
+      html += `<div class="check-small ${sub.done ? 'done' : ''}" data-action="toggle-sub" data-idx="${idx}" data-sub="${j}" title="Toggle done">`;
+      if (sub.done) html += `<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#0a0d14" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+      html += `</div>`;
+      if (isEditingThis) {
+        html += `<input autofocus class="sub-item-input" data-action="edit-sub" data-idx="${idx}" data-sub="${j}" value="${escapeHtml(sub.name)}" />`;
+      } else {
+        const struck = sub.done ? 'struck' : '';
+        const display = sub.name ? escapeHtml(sub.name) : '<span style="opacity:0.4;font-style:italic">untitled</span>';
+        html += `<span class="sub-item-text ${struck}" data-action="start-edit-sub" data-idx="${idx}" data-sub="${j}" title="Click to edit">${display}</span>`;
+      }
+      html += `<button class="remove-btn" data-action="remove-sub" data-idx="${idx}" data-sub="${j}" title="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+      html += `</div>`;
+    });
+    html += `<button class="sub-add" data-action="add-sub" data-idx="${idx}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> ADD ITEM</button>`;
+    html += `</div>`;
+  }
+
+  html += `</div>`;
+  return html;
+}
+
+function renderSuitcase() {
+  return `
+    <div class="suitcase-section">
+      <div class="list-label" style="margin-bottom:14px;padding-left:4px">SUITCASE LAYOUT</div>
+      <svg class="suitcase-svg" viewBox="0 0 320 520" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#a23a3a"/>
+            <stop offset="1" stop-color="#7a2828"/>
+          </linearGradient>
+          <linearGradient id="shg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#2a2f3a"/>
+            <stop offset="1" stop-color="#1a1f2a"/>
+          </linearGradient>
+        </defs>
+
+        <rect x="40" y="20" width="240" height="220" rx="6" fill="url(#shg)" stroke="rgba(232,228,216,0.18)" stroke-width="1.5"/>
+        <text x="160" y="14" text-anchor="middle" font-size="9" fill="#d4a574" font-family="ui-monospace, monospace" letter-spacing="3">SHELF ORGANIZER</text>
+
+        <rect x="48" y="32" width="224" height="62" rx="4" fill="rgba(212,165,116,0.06)" stroke="rgba(212,165,116,0.3)" stroke-width="1"/>
+        <text x="56" y="48" font-size="10" fill="#d4a574" font-family="ui-monospace, monospace" letter-spacing="1.5" font-weight="600">SHELF 1 — TOP</text>
+        <text x="56" y="64" font-size="11" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Meds · Mints · Zofran</text>
+        <text x="56" y="80" font-size="11" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Supplements · Xanax</text>
+
+        <rect x="48" y="100" width="224" height="62" rx="4" fill="rgba(212,165,116,0.06)" stroke="rgba(212,165,116,0.3)" stroke-width="1"/>
+        <text x="56" y="116" font-size="10" fill="#d4a574" font-family="ui-monospace, monospace" letter-spacing="1.5" font-weight="600">SHELF 2 — MIDDLE</text>
+        <text x="56" y="132" font-size="11" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Teas · Kettle · Peppermint</text>
+        <text x="56" y="148" font-size="11" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Olive leaf key</text>
+
+        <rect x="48" y="168" width="224" height="62" rx="4" fill="rgba(212,165,116,0.06)" stroke="rgba(212,165,116,0.3)" stroke-width="1"/>
+        <text x="56" y="184" font-size="10" fill="#d4a574" font-family="ui-monospace, monospace" letter-spacing="1.5" font-weight="600">SHELF 3 — BOTTOM</text>
+        <text x="56" y="200" font-size="11" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Snacks · Taro chips · Bars</text>
+        <text x="56" y="216" font-size="11" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Wooden forks · Bowls</text>
+
+        <line x1="160" y1="240" x2="160" y2="258" stroke="rgba(232,228,216,0.2)" stroke-width="1" stroke-dasharray="2,3"/>
+
+        <rect x="30" y="260" width="260" height="240" rx="14" fill="url(#sg)" stroke="rgba(232,228,216,0.15)" stroke-width="1.5"/>
+        <rect x="120" y="252" width="80" height="6" rx="2" fill="#0a0d14" opacity="0.6"/>
+        <rect x="146" y="268" width="28" height="10" rx="2" fill="rgba(232,228,216,0.6)"/>
+        <circle cx="160" cy="273" r="1.5" fill="#0a0d14"/>
+        <rect x="46" y="284" width="228" height="14" rx="2" fill="rgba(232,228,216,0.85)"/>
+        ${['A','B','C','D','E','F','G'].map((l,i) => `<text x="${56 + i*32}" y="294" font-size="9" fill="#1a1f2e" font-family="ui-monospace, monospace" font-weight="700">${l}</text>`).join('')}
+
+        <rect x="60" y="320" width="200" height="160" rx="6" fill="rgba(0,0,0,0.18)" stroke="rgba(232,228,216,0.12)" stroke-width="1"/>
+        <line x1="160" y1="320" x2="160" y2="480" stroke="rgba(232,228,216,0.12)" stroke-width="1" stroke-dasharray="3,3"/>
+        <line x1="60" y1="400" x2="260" y2="400" stroke="rgba(232,228,216,0.12)" stroke-width="1" stroke-dasharray="3,3"/>
+
+        <text x="110" y="346" text-anchor="middle" font-size="9" fill="#d4a574" font-family="ui-monospace, monospace" letter-spacing="1.2" font-weight="600">FRONT-L</text>
+        <text x="110" y="362" text-anchor="middle" font-size="10" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Diapers</text>
+        <text x="110" y="376" text-anchor="middle" font-size="10" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Waters ×4</text>
+
+        <text x="210" y="346" text-anchor="middle" font-size="9" fill="#d4a574" font-family="ui-monospace, monospace" letter-spacing="1.2" font-weight="600">FRONT-R</text>
+        <text x="210" y="362" text-anchor="middle" font-size="10" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">ID + cards</text>
+        <text x="210" y="376" text-anchor="middle" font-size="10" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Redwood keys</text>
+
+        <text x="110" y="426" text-anchor="middle" font-size="9" fill="#d4a574" font-family="ui-monospace, monospace" letter-spacing="1.2" font-weight="600">BACK-L</text>
+        <text x="110" y="442" text-anchor="middle" font-size="10" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Kitchen</text>
+        <text x="110" y="456" text-anchor="middle" font-size="10" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">stuff</text>
+
+        <text x="210" y="426" text-anchor="middle" font-size="9" fill="#d4a574" font-family="ui-monospace, monospace" letter-spacing="1.2" font-weight="600">BACK-R</text>
+        <text x="210" y="442" text-anchor="middle" font-size="10" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Fanny pack</text>
+        <text x="210" y="456" text-anchor="middle" font-size="10" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">+ massager</text>
+
+        <circle cx="60" cy="500" r="8" fill="#0a0d14" stroke="rgba(232,228,216,0.2)" stroke-width="1"/>
+        <circle cx="260" cy="500" r="8" fill="#0a0d14" stroke="rgba(232,228,216,0.2)" stroke-width="1"/>
+        <circle cx="60" cy="500" r="3" fill="rgba(232,228,216,0.3)"/>
+        <circle cx="260" cy="500" r="3" fill="rgba(232,228,216,0.3)"/>
+
+        <rect x="30" y="260" width="260" height="240" rx="14" fill="none" stroke="rgba(0,0,0,0.3)" stroke-width="1" stroke-dasharray="2,4" opacity="0.5"/>
+      </svg>
+      <div class="footer-hint" style="margin-top:8px">VISUAL REFERENCE</div>
+    </div>
+  `;
+}
+
+function render() {
+  const { active, done } = getOrder();
+  const cur = getCurrent();
+  const isAllDone = !cur;
+  const totalCount = state.ids.length;
+  const completedCount = state.completedIds.length;
+
+  const canPrev = cur && cur.idx > 0;
+  const canNext = cur && cur.idx < state.tasks.length - 1;
+
+  const radius = 130;
+  const circumference = 2 * Math.PI * radius;
+  const progress = isAllDone ? 1 : 1 - state.timeLeft / TASK_DURATION;
+  const dashOffset = circumference * progress;
+
+  const m = Math.floor(state.timeLeft / 60);
+  const s = state.timeLeft % 60;
+  const timeStr = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+  const isGroup = cur && cur.task.type === 'group';
+  const hasItems = isGroup && cur.task.items && cur.task.items.length > 0;
+
+  let centerHtml;
+  if (isAllDone) {
+    centerHtml = `
+      <div class="center-task-name">All packed.</div>
+      <div class="sf-mono" style="font-size:11px;opacity:0.6;letter-spacing:0.15em">READY TO GO</div>
+    `;
+  } else {
+    let subListHtml = '';
+    if (hasItems) {
+      subListHtml = `<div class="center-sub-list">` +
+        cur.task.items.map((it, j) => `
+          <div class="center-sub ${it.done ? 'done' : ''}" data-action="toggle-sub" data-idx="${cur.idx}" data-sub="${j}">
+            <div class="check-small ${it.done ? 'done' : ''}" style="width:11px;height:11px">
+              ${it.done ? '<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#0a0d14" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
+            </div>
+            ${escapeHtml(it.name)}
+          </div>
+        `).join('') +
+        `</div>`;
+    }
+    centerHtml = `
+      <div class="center-task-name ${isGroup ? 'group' : ''}">${escapeHtml(cur.task.name)}${isGroup ? ':' : ''}</div>
+      ${cur.task.location ? `<div class="center-location">📍 ${escapeHtml(cur.task.location)}</div>` : ''}
+      ${subListHtml}
+      <div class="center-time ${state.timeLeft < 30 ? 'warn' : ''} ${hasItems ? 'small' : ''}">${timeStr}</div>
+    `;
+  }
+
+  let controlsHtml = '';
+  if (!isAllDone) {
+    controlsHtml += `<button class="btn btn-done" data-action="mark-done" title="Mark done & next">${icon('check')}</button>`;
+    if (state.isRunning) {
+      controlsHtml += `<button class="btn" data-action="pause">${icon('pause')} Pause</button>`;
+    } else {
+      controlsHtml += `<button class="btn btn-primary" data-action="start">${icon('play')} ${state.hasStarted ? 'Resume' : 'Start'}</button>`;
+    }
+    if (state.hasStarted) {
+      controlsHtml += `<button class="btn btn-icon" data-action="repeat" title="Repeat task">${icon('volume')}</button>`;
+    }
+  }
+  controlsHtml += `<button class="btn btn-icon" data-action="mute" title="${state.muted ? 'Unmute' : 'Mute'}">${state.muted ? icon('volume-mute') : icon('volume')}</button>`;
+  controlsHtml += `<button class="btn btn-icon" data-action="reset" title="Reset">${icon('rotate')}</button>`;
+
+  let listHtml = `
+    <div class="list-section">
+      <div class="list-header">
+        <div class="list-label">TASKS</div>
+        <button class="add-btn" data-action="add-task">${icon('plus', 11)} ADD</button>
+      </div>
+  `;
+  active.forEach((entry, i) => {
+    listHtml += renderTaskRow(state.tasks[entry.idx], entry.idx, i === 0, false);
+  });
+  if (done.length > 0) {
+    listHtml += `<div class="done-divider">PACKED</div>`;
+    done.forEach(entry => {
+      listHtml += renderTaskRow(state.tasks[entry.idx], entry.idx, false, true);
+    });
+  }
+  listHtml += `</div>`;
+
+  document.getElementById('app').innerHTML = `
+    <div class="header">
+      <div class="header-title">PACKING ASSISTANT</div>
+      <div class="header-count">${completedCount} / ${totalCount}</div>
+    </div>
+    <div class="circle-row">
+      <button class="nav-arrow" data-action="prev-task" ${!canPrev ? 'aria-disabled="true"' : ''} title="Previous task (←)">
+        <svg width="20" height="20" aria-hidden="true"><use href="#i-chev-left"/></svg>
+      </button>
+      <div class="circle-wrap">
+        <svg class="ring" width="300" height="300">
+          <circle cx="150" cy="150" r="${radius}" fill="none" stroke="rgba(232,228,216,0.08)" stroke-width="3"/>
+          <circle cx="150" cy="150" r="${radius}" fill="none" stroke="${state.timeLeft < 30 ? '#d4a574' : '#d4a574'}" stroke-width="3" stroke-linecap="round" stroke-dasharray="${circumference}" stroke-dashoffset="${dashOffset}" style="transition:stroke-dashoffset 0.9s linear" class="${state.isRunning ? 'ring-active' : ''}"/>
+        </svg>
+        <div class="circle-center">${centerHtml}</div>
+      </div>
+      <button class="nav-arrow" data-action="next-task" ${!canNext ? 'aria-disabled="true"' : ''} title="Next task (→)">
+        <svg width="20" height="20" aria-hidden="true"><use href="#i-chev-right"/></svg>
+      </button>
+    </div>
+    <div class="kbd-hint"><span class="kbd">←</span> <span class="kbd">→</span> NAV &nbsp;·&nbsp; <span class="kbd">SPACE</span> START / PAUSE &nbsp;·&nbsp; <span class="kbd">↵</span> MARK DONE</div>
+    <div class="controls">${controlsHtml}</div>
+    ${listHtml}
+    ${renderSuitcase()}
+    <div class="footer-hint">TAP ANY TEXT (TASK NAME, 📍 LOCATION, ITEM) TO EDIT</div>
+  `;
+
+  // Focus inputs that just appeared
+  if (state.editingNameIdx !== null) {
+    const el = document.querySelector(`input.task-name-input[data-idx="${state.editingNameIdx}"]`);
+    if (el) { el.focus(); el.select(); }
+  }
+  if (state.editingLocationIdx !== null) {
+    const el = document.querySelector(`input.location-input[data-idx="${state.editingLocationIdx}"]`);
+    if (el) { el.focus(); el.select(); }
+  }
+  if (state.editingSub.taskIdx !== null) {
+    const el = document.querySelector(`input.sub-item-input[data-idx="${state.editingSub.taskIdx}"][data-sub="${state.editingSub.subIdx}"]`);
+    if (el) { el.focus(); el.select(); }
+  }
+}
+
+// ---- Event delegation ----
+document.addEventListener('click', (e) => {
+  // Find closest element with data-action
+  const target = e.target.closest('[data-action]');
+  if (!target) return;
+  const action = target.dataset.action;
+  const idx = target.dataset.idx !== undefined ? parseInt(target.dataset.idx, 10) : null;
+  const sub = target.dataset.sub !== undefined ? parseInt(target.dataset.sub, 10) : null;
+
+  switch (action) {
+    case 'start': handleStart(); break;
+    case 'pause': handlePause(); break;
+    case 'mark-done': handleMarkDone(); break;
+    case 'reset': handleReset(); break;
+    case 'repeat': handleRepeat(); break;
+    case 'mute': toggleMute(); break;
+    case 'toggle-task': toggleTaskDone(state.ids[idx]); break;
+    case 'toggle-sub': toggleSub(idx, sub); break;
+    case 'start-edit-name':
+      state.editingNameIdx = idx;
+      state.editingLocationIdx = null;
+      state.editingSub = { taskIdx: null, subIdx: null };
+      render();
+      break;
+    case 'toggle-location-edit':
+      state.editingLocationIdx = state.editingLocationIdx === idx ? null : idx;
+      state.editingNameIdx = null;
+      state.editingSub = { taskIdx: null, subIdx: null };
+      render();
+      break;
+    case 'start-edit-sub':
+      state.editingSub = { taskIdx: idx, subIdx: sub };
+      state.editingNameIdx = null;
+      state.editingLocationIdx = null;
+      render();
+      break;
+    case 'add-task': addTask(); break;
+    case 'remove-task': removeTask(idx); break;
+    case 'add-sub': addSubItem(idx); break;
+    case 'remove-sub': removeSubItem(idx, sub); break;
+    case 'prev-task':
+      if (target.getAttribute('aria-disabled') !== 'true') goToPrevTask();
+      break;
+    case 'next-task':
+      if (target.getAttribute('aria-disabled') !== 'true') goToNextTask();
+      break;
+  }
+});
+
+// Input handlers (using `input` for live updates, `blur`/`keydown` to commit)
+document.addEventListener('input', (e) => {
+  const target = e.target;
+  if (!target.dataset.action) return;
+  const idx = parseInt(target.dataset.idx, 10);
+  const sub = target.dataset.sub !== undefined ? parseInt(target.dataset.sub, 10) : null;
+  const val = target.value;
+
+  if (target.dataset.action === 'edit-name') {
+    state.tasks[idx].name = val;
+  } else if (target.dataset.action === 'edit-location') {
+    state.tasks[idx].location = val;
+  } else if (target.dataset.action === 'edit-sub') {
+    state.tasks[idx].items[sub].name = val;
+  }
+  // Don't re-render on every keystroke — preserves focus/cursor
+});
+
+document.addEventListener('blur', (e) => {
+  const target = e.target;
+  if (!target.dataset || !target.dataset.action) return;
+  if (target.dataset.action === 'edit-name') {
+    state.editingNameIdx = null;
+    render();
+  } else if (target.dataset.action === 'edit-location') {
+    state.editingLocationIdx = null;
+    render();
+  } else if (target.dataset.action === 'edit-sub') {
+    state.editingSub = { taskIdx: null, subIdx: null };
+    render();
+  }
+}, true);
+
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== 'Escape') return;
+  const target = e.target;
+  if (!target.dataset || !target.dataset.action) return;
+  if (['edit-name','edit-location','edit-sub'].includes(target.dataset.action)) {
+    target.blur();
+  }
+});
+
+// Global keyboard shortcuts — ignored while editing
+document.addEventListener('keydown', (e) => {
+  // If user is typing in an input, ignore all shortcuts
+  const t = e.target;
+  const tag = t && t.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || (t && t.isContentEditable)) return;
+
+  if (e.key === 'ArrowLeft') {
+    e.preventDefault();
+    goToPrevTask();
+  } else if (e.key === 'ArrowRight') {
+    e.preventDefault();
+    goToNextTask();
+  } else if (e.key === ' ' || e.code === 'Space') {
+    e.preventDefault();
+    if (getCurrent()) {
+      if (state.isRunning) handlePause();
+      else handleStart();
+    }
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    handleMarkDone();
+  } else if (e.key === 'm' || e.key === 'M') {
+    e.preventDefault();
+    toggleMute();
+  } else if (e.key === 'r' || e.key === 'R') {
+    e.preventDefault();
+    handleRepeat();
+  }
+});
+
+// initial render
+render();
+</script>
+</body>
+</html>
