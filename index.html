@@ -1628,20 +1628,34 @@ function addTask() {
 }
 
 // Add a single task (no splitting). Returns true if added to main list.
+// Understands a trailing " - location" suffix so a copied row
+// like "🍠 Taro chips #snacks - Shelf 1" stays as ONE task with its location.
 function addSingleTask(rawName, location) {
-  const trimmed = (rawName || '').trim();
-  if (!trimmed) return false;
-  const loc = (location || '').trim();
+  let line = (rawName || '').trim();
+  if (!line) return false;
+  let loc = (location || '').trim();
+
+  // Detect a " - location" suffix (only if no explicit location was passed).
+  // Uses " - " (space-dash-space) or a trailing " -location" to avoid splitting
+  // hyphenated words like "self-care".
+  if (!loc) {
+    const m = line.match(/\s[-–—]\s*(.+)$/);
+    if (m) {
+      loc = m[1].trim();
+      line = line.slice(0, m.index).trim();
+    }
+  }
+
   // If tagged #unfurnished, route to the unfurnished list instead.
-  if (extractTags(trimmed).map(t => t.toLowerCase()).includes('unfurnished')) {
-    const text = trimmed.replace(/\s*#unfurnished\b/gi, '').trim();
+  if (extractTags(line).map(t => t.toLowerCase()).includes('unfurnished')) {
+    const text = line.replace(/\s*#unfurnished\b/gi, '').trim();
     state.unfurnished.push(text || '(untitled)');
     return true;
   }
   const newId = state.nextId++;
-  const split = splitLeadingEmoji(trimmed);
+  const split = splitLeadingEmoji(line);
   const emoji = split.emoji; // may be ''
-  const taskName = split.emoji ? split.rest : trimmed;
+  const taskName = split.emoji ? split.rest : line;
   // Insert at top of list
   state.tasks.unshift({ type: 'item', emoji, name: taskName, location: loc });
   state.ids.unshift(newId);
@@ -1651,11 +1665,13 @@ function addSingleTask(rawName, location) {
 
 // Quick-add: accepts one or many items. Splits on newlines (and commas) so the
 // user can paste/type a whole list at once and get separate tasks.
+// Each line may carry its own " - location" suffix.
 function quickAddTask(name, location) {
   const raw = (name || '');
   if (!raw.trim()) return;
   // Split on newlines first; if it's a single line, also allow comma separation.
   let parts = raw.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  let usedNewlines = parts.length > 1;
   if (parts.length <= 1) {
     parts = raw.split(',').map(s => s.trim()).filter(Boolean);
   }
@@ -1666,9 +1682,14 @@ function quickAddTask(name, location) {
   // (since each addSingleTask unshifts to position 0).
   let addedAny = false;
   for (let i = parts.length - 1; i >= 0; i--) {
-    // Only the first item (top of the list) gets the location, to keep it simple.
-    const loc = (i === 0) ? location : '';
-    if (addSingleTask(parts[i], loc)) addedAny = true;
+    // Pass the shared `location` field only to the first line AND only when the
+    // line itself has no " - location" suffix; per-line suffixes win.
+    const sharedLoc = (i === 0) ? (location || '') : '';
+    if (addSingleTask(parts[i], '')) addedAny = true;
+    // If a shared location was given and the just-added top task has none, apply it.
+    if (i === 0 && sharedLoc && state.tasks[0] && !state.tasks[0].location) {
+      state.tasks[0].location = sharedLoc.trim();
+    }
   }
   if (!addedAny) return;
   render();
@@ -2784,6 +2805,40 @@ document.addEventListener('input', (e) => {
     e.target.style.height = 'auto';
     e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
   }
+});
+
+// When the user copies a selection that includes task rows, rewrite the
+// clipboard text so each task is ONE clean line: "emoji name #tags - location".
+// This keeps name + tags + location together so pasting re-creates the tasks.
+document.addEventListener('copy', (e) => {
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed) return;
+
+  // Find all task rows that intersect the selection
+  const allRows = Array.from(document.querySelectorAll('.task-item'));
+  const selectedRows = allRows.filter(row => {
+    try { return sel.containsNode(row, true); } catch { return false; }
+  });
+  if (selectedRows.length === 0) return; // not a task selection — leave default copy
+
+  const lines = selectedRows.map(row => {
+    const idx = parseInt(row.dataset.idx, 10);
+    const task = state.tasks[idx];
+    if (!task) return '';
+    const emoji = task.emoji ? task.emoji + ' ' : '';
+    const name = (task.name || '').trim(); // tags are already inline in the name
+    const loc = (task.location || '').trim();
+    let line = (emoji + name).trim();
+    if (loc) line += ` - ${loc}`;
+    return line;
+  }).filter(Boolean);
+
+  if (lines.length === 0) return;
+  e.preventDefault();
+  const text = lines.join('\n');
+  try {
+    (e.clipboardData || window.clipboardData).setData('text/plain', text);
+  } catch {}
 });
 
 // Multi-line paste into the UNFURNISHED add box → split into separate items.
