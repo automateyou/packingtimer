@@ -752,6 +752,10 @@ const DEFAULT_TASKS = [
   { type: 'item', emoji: "🔒", name: "Lock the door #beforeleaving", location: "" },
 ];
 
+// Default unfurnished-list items (baked-in starter list; empty by default).
+const DEFAULT_UNFURNISHED = [
+];
+
 // ---- App State ----
 // Persisted to localStorage so your edits, checks, and additions survive
 // page reloads AND any future updates to the app code.
@@ -828,6 +832,8 @@ function buildDefaultState() {
     suitcaseRows: [
       { name: "Row 1", items: ["Contact lenses"] },
     ],
+    unfurnished: DEFAULT_UNFURNISHED.slice(),
+    unfurnishedDone: [],
   };
 }
 
@@ -1310,6 +1316,94 @@ function handleReset() {
 function handleRepeat() {
   const cur = getCurrent();
   if (cur && !state.muted) speak(buildSpeechIntro(cur.task));
+}
+
+// Uncheck every task & sub-item & unfurnished item, but DON'T touch the timer,
+// playing state, or current position (unlike "Start over"/reset).
+function uncheckAll() {
+  pushUndo();
+  state.completedIds = [];
+  state.tasks.forEach(t => {
+    if (t.type === 'group' && t.items) t.items.forEach(it => it.done = false);
+  });
+  state.unfurnishedDone = [];
+  render();
+}
+
+// Export current tasks as a ready-to-paste DEFAULT_TASKS array + unfurnished list.
+// This lets the user bake their live edits into a publishable HTML file.
+function exportTasks() {
+  const taskLines = state.tasks.map(t => {
+    const emoji = (t.emoji || '').replace(/"/g, '\\"');
+    const name = (t.name || '').replace(/"/g, '\\"');
+    const loc = (t.location || '').replace(/"/g, '\\"');
+    return `  { type: 'item', emoji: "${emoji}", name: "${name}", location: "${loc}" },`;
+  }).join('\n');
+
+  const ufLines = state.unfurnished.map(item => {
+    return `  "${(item || '').replace(/"/g, '\\"')}",`;
+  }).join('\n');
+
+  const snippet =
+`const DEFAULT_TASKS = [
+${taskLines}
+];
+
+const DEFAULT_UNFURNISHED = [
+${ufLines}
+];`;
+
+  // Show in a prompt-style overlay the user can copy from
+  const blob = new Blob([snippet], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'my-packing-tasks.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  // Also copy to clipboard if possible
+  try {
+    navigator.clipboard.writeText(snippet);
+    alert('Your tasks were copied to the clipboard AND downloaded as "my-packing-tasks.txt". Paste that text to Claude to get a publishable version with your tasks baked in.');
+  } catch {
+    alert('Your tasks were downloaded as "my-packing-tasks.txt". Open it and paste the contents to Claude to get a publishable version with your tasks baked in.');
+  }
+}
+
+// Import tasks from a pasted JSON / snippet (advanced). Accepts the same shape
+// exportTasks produces, or a raw JSON state object.
+function importTasks() {
+  const txt = prompt('Paste exported task text here to load it:');
+  if (!txt) return;
+  try {
+    // Try to extract DEFAULT_TASKS array via a loose eval in a sandbox-ish way
+    const taskMatch = txt.match(/DEFAULT_TASKS\s*=\s*(\[[\s\S]*?\]);/);
+    const ufMatch = txt.match(/DEFAULT_UNFURNISHED\s*=\s*(\[[\s\S]*?\]);/);
+    if (taskMatch) {
+      pushUndo();
+      // eslint-disable-next-line no-eval
+      const tasks = eval(taskMatch[1]);
+      state.tasks = tasks.map(t => ({ type: 'item', emoji: t.emoji || '', name: t.name || '', location: t.location || '' }));
+      state.ids = tasks.map((_, i) => i);
+      state.nextId = tasks.length;
+      state.completedIds = [];
+      state.manualIdx = null;
+      if (ufMatch) {
+        // eslint-disable-next-line no-eval
+        state.unfurnished = eval(ufMatch[1]);
+        state.unfurnishedDone = [];
+      }
+      render();
+      alert('Tasks imported successfully.');
+    } else {
+      alert('Could not find a DEFAULT_TASKS array in the pasted text.');
+    }
+  } catch (e) {
+    alert('Import failed: ' + e.message);
+  }
 }
 
 function toggleMute() {
@@ -2073,7 +2167,8 @@ function render() {
       controlsHtml += `<button class="btn btn-icon" data-action="repeat" title="Repeat task aloud">${icon('refresh')}</button>`;
     }
   }
-  controlsHtml += `<button class="btn btn-icon" data-action="reset" title="Reset">${icon('rotate')}</button>`;
+  controlsHtml += `<button class="btn btn-icon" data-action="reset" title="Start over (reset timer & progress)">${icon('rotate')}</button>`;
+  controlsHtml += `<button class="btn" data-action="uncheck-all" title="Uncheck every task & item">Uncheck All</button>`;
 
   // Volume control — pinned to top right of the screen
   const effectiveVol = state.muted ? 0 : state.volume;
@@ -2176,7 +2271,7 @@ function render() {
     <div class="controls">${controlsHtml}</div>
     ${listHtml}
     ${renderUnfurnished()}
-    <div class="footer-hint">TAP ANY TEXT TO EDIT &nbsp;·&nbsp; DRAG ROWS TO REORDER &nbsp;·&nbsp; <span class="reset-link" data-action="reset-all">RESET TO DEFAULTS</span></div>
+    <div class="footer-hint">TAP ANY TEXT TO EDIT &nbsp;·&nbsp; DRAG ROWS TO REORDER &nbsp;·&nbsp; <span class="reset-link" data-action="export-tasks">EXPORT MY TASKS</span> &nbsp;·&nbsp; <span class="reset-link" data-action="import-tasks">IMPORT</span> &nbsp;·&nbsp; <span class="reset-link" data-action="reset-all">RESET TO DEFAULTS</span></div>
   `;
 
   // Focus inputs that just appeared
@@ -2243,6 +2338,7 @@ document.addEventListener('click', (e) => {
     case 'pause': handlePause(); break;
     case 'mark-done': handleMarkDone(); break;
     case 'reset': handleReset(); break;
+    case 'uncheck-all': uncheckAll(); break;
     case 'repeat': handleRepeat(); break;
     case 'mute': toggleMute(); break;
     case 'toggle-task': toggleTaskDone(state.ids[idx]); break;
@@ -2282,11 +2378,13 @@ document.addEventListener('click', (e) => {
       playFromTask(idx);
       break;
     case 'reset-all':
-      if (confirm('Wipe ALL saved tasks, locations, and suitcase items? This will restore the default starter list. This cannot be undone with ⌘Z.')) {
+      if (confirm('Wipe ALL saved tasks, locations, and unfurnished items? This will restore the default starter list. This cannot be undone with ⌘Z.')) {
         try { localStorage.removeItem(STORAGE_KEY); } catch {}
         location.reload();
       }
       break;
+    case 'export-tasks': exportTasks(); break;
+    case 'import-tasks': importTasks(); break;
     case 'add-sc-row': addSuitcaseRow(); break;
     case 'remove-sc-row':
       e.stopPropagation();
