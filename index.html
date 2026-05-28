@@ -172,7 +172,7 @@
     color: rgba(232,228,216,0.35); font-style: italic; font-weight: 400;
   }
 
-  /* Drag-and-drop */
+  /* Drag-and-drop — whole row is draggable, no handle */
   .task-item.dragging {
     opacity: 0.4; cursor: grabbing;
     transform: scale(0.98);
@@ -183,23 +183,48 @@
   .task-item.drag-over-bottom {
     box-shadow: 0 2px 0 var(--accent);
   }
-  .drag-handle {
-    color: rgba(232,228,216,0.25); cursor: grab;
-    padding: 4px 2px; display: flex; align-items: center;
-    flex-shrink: 0; transition: color 0.2s ease;
-    margin-top: 2px;
-  }
-  .drag-handle:hover { color: rgba(232,228,216,0.7); }
-  .drag-handle:active { cursor: grabbing; }
 
-  /* Don't let inputs trigger drag */
-  .task-item input, .task-item .check-circle, .task-item .pin-add,
-  .task-item .pin-location-combo, .task-item .remove-btn,
-  .task-item .task-name-text, .task-item .sub-item-text,
-  .task-item .sub-add, .task-item .check-small {
+  /* Per-task play button — triangle, larger, rounded corners */
+  .task-play-btn {
+    background: transparent;
+    border: none;
+    color: var(--accent);
+    width: 28px; height: 28px; border-radius: 8px;
+    cursor: pointer; flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-top: 0;
+    transition: all 0.18s ease;
+    padding: 0;
+  }
+  .task-play-btn:hover {
+    background: rgba(212, 165, 116, 0.15);
+    color: var(--accent);
+    transform: scale(1.12);
+  }
+  .task-play-btn.playing {
+    background: rgba(212, 165, 116, 0.2);
+    color: var(--accent);
+    animation: pulse-ring 2s ease-in-out infinite;
+  }
+  .task-play-btn svg { display: block; }
+
+  /* Default cursor on whole row: grab, but interactive elements override */
+  .task-item { cursor: grab; }
+  .task-item:active { cursor: grabbing; }
+  .task-item input,
+  .task-item .check-circle,
+  .task-item .location-inline,
+  .task-item .location-add,
+  .task-item .remove-btn,
+  .task-item .task-name-text,
+  .task-item .sub-item-text,
+  .task-item .sub-add,
+  .task-item .check-small,
+  .task-item .task-play-btn {
     cursor: pointer;
   }
   .task-item input { cursor: text; }
+
   .list-label { font-family: var(--sf-mono); font-size: 10px; letter-spacing: 0.3em; opacity: 0.4; }
   .add-btn {
     background: transparent; border: 1px solid rgba(232,228,216,0.15);
@@ -211,30 +236,30 @@
   .add-btn:hover { background: rgba(255,255,255,0.06); color: var(--fg); }
 
   .task-item {
-    padding: 6px 14px; border-radius: 10px; margin-bottom: 1px;
+    padding: 3px 12px; border-radius: 8px; margin-bottom: 0;
     transition: background 0.4s ease, border-color 0.4s ease, opacity 0.4s ease;
     border: 1px solid transparent; position: relative;
   }
   .task-current { background: rgba(212,165,116,0.08); border-color: rgba(212,165,116,0.3); }
-  .task-done { opacity: 0.32; }
-  .task-pending { opacity: 0.85; }
+  .task-done { opacity: 0.35; }
+  .task-pending { opacity: 0.9; }
 
-  .task-main-row { display: flex; align-items: flex-start; gap: 12px; }
+  .task-main-row { display: flex; align-items: center; gap: 9px; }
   .task-body { flex: 1; min-width: 0; }
-  .task-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .task-row { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
 
   .check-circle {
-    width: 20px; height: 20px; border-radius: 50%;
+    width: 17px; height: 17px; border-radius: 50%;
     border: 1.5px solid rgba(232,228,216,0.3); flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    margin-top: 3px; cursor: pointer; transition: border-color 0.2s ease;
+    cursor: pointer; transition: border-color 0.2s ease;
   }
   .check-circle:hover { border-color: rgba(232,228,216,0.6); }
   .check-circle.done { background: var(--green); border-color: var(--green); }
   .check-circle.current { border-color: var(--accent); background: rgba(212,165,116,0.15); }
 
   .check-small {
-    width: 15px; height: 15px; border-radius: 50%;
+    width: 13px; height: 13px; border-radius: 50%;
     border: 1.5px solid rgba(232,228,216,0.3); flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     cursor: pointer; transition: border-color 0.2s ease;
@@ -243,83 +268,66 @@
   .check-small.done { background: var(--green); border-color: var(--green); }
 
   .task-name-text {
-    font-size: 15px; font-weight: 500; cursor: pointer;
-    padding: 2px 6px; margin: -2px -6px; border-radius: 6px;
-    transition: background 0.2s ease; letter-spacing: -0.01em;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    padding: 1px 5px; margin: -1px -5px; border-radius: 5px;
+    transition: background 0.2s ease; letter-spacing: -0.005em;
   }
-  .task-name-text.group { font-weight: 700; font-size: 16px; letter-spacing: -0.02em; }
+  .task-name-text.group { font-weight: 700; font-size: 14px; letter-spacing: -0.015em; }
   .task-name-text:hover { background: rgba(255,255,255,0.06); }
   .task-name-text.struck { text-decoration: line-through; text-decoration-color: rgba(232,228,216,0.4); }
   .task-name-text.empty { opacity: 0.4; font-style: italic; }
 
   .task-name-input {
-    font-family: var(--sf-display); font-size: 15px; font-weight: 500;
+    font-family: var(--sf-display); font-size: 13px; font-weight: 500;
     background: rgba(255,255,255,0.08); border: 1px solid rgba(212,165,116,0.4);
-    color: var(--fg); padding: 2px 6px; border-radius: 6px; outline: none;
-    width: 100%; max-width: 280px; letter-spacing: -0.01em;
+    color: var(--fg); padding: 1px 5px; border-radius: 5px; outline: none;
+    width: 100%; max-width: 280px; letter-spacing: -0.005em;
   }
-  .task-name-input.group { font-weight: 700; font-size: 16px; }
+  .task-name-input.group { font-weight: 700; font-size: 14px; }
+
+  /* Inline location — part of the text, no pin emoji */
+  .location-inline {
+    font-family: var(--sf-display); font-size: 12px;
+    color: var(--accent); opacity: 0.85;
+    cursor: pointer; padding: 1px 4px; margin: -1px -4px;
+    border-radius: 4px; transition: background 0.2s ease;
+    letter-spacing: -0.005em;
+  }
+  .location-inline:hover { background: rgba(212,165,116,0.1); }
+
+  .location-add {
+    font-family: var(--sf-display); font-size: 11px;
+    color: rgba(232,228,216,0.3); cursor: pointer;
+    padding: 1px 5px; border-radius: 4px;
+    transition: all 0.2s ease;
+    opacity: 0; font-style: italic;
+  }
+  .task-item:hover .location-add { opacity: 1; }
+  .location-add:hover { color: var(--accent); background: rgba(212,165,116,0.08); }
+
+  .location-input {
+    font-family: var(--sf-display); font-size: 12px;
+    background: rgba(212,165,116,0.1); border: 1px solid rgba(212,165,116,0.4);
+    color: var(--accent); padding: 1px 6px; border-radius: 4px; outline: none;
+    width: 180px;
+  }
 
   .sub-item-text {
-    font-size: 13px; cursor: pointer; padding: 1px 6px; margin-left: -6px;
+    font-size: 12px; cursor: pointer; padding: 1px 5px; margin-left: -5px;
     border-radius: 4px; transition: background 0.2s ease; flex: 1;
     letter-spacing: -0.005em;
   }
   .sub-item-text:hover { background: rgba(255,255,255,0.06); }
   .sub-item-text.struck { text-decoration: line-through; text-decoration-color: rgba(232,228,216,0.4); opacity: 0.5; }
   .sub-item-input {
-    font-family: var(--sf-display); font-size: 13px;
-    background: rgba(255,255,255,0.08); border: 1px solid rgba(212,165,116,0.4);
-    color: var(--fg); padding: 1px 6px; border-radius: 4px; outline: none; flex: 1;
-  }
-
-  .pin-btn {
-    background: transparent; border: none; cursor: pointer; font-size: 14px;
-    padding: 2px 4px; border-radius: 6px; line-height: 1;
-    transition: background 0.2s ease, transform 0.2s ease; opacity: 0.6;
-  }
-  .pin-btn:hover { background: rgba(255,255,255,0.08); opacity: 1; transform: scale(1.15); }
-  .pin-btn.has-location { opacity: 1; }
-
-  /* Inline 📍 + location, all part of editable task text */
-  .pin-add {
-    cursor: pointer; opacity: 0.35; padding: 2px 6px; border-radius: 6px;
-    font-size: 14px; line-height: 1; transition: all 0.2s ease;
-  }
-  .pin-add:hover { opacity: 1; background: rgba(255,255,255,0.06); transform: scale(1.1); }
-
-  .pin-location-combo {
-    display: inline-flex; align-items: center; gap: 4px;
-    cursor: pointer; padding: 2px 8px; border-radius: 6px;
-    background: rgba(212,165,116,0.08);
-    transition: background 0.2s ease;
     font-family: var(--sf-display); font-size: 12px;
-    color: var(--accent);
-  }
-  .pin-location-combo:hover { background: rgba(212,165,116,0.16); }
-  .location-text-inline {
-    font-family: var(--sf-mono); font-size: 11px;
-    letter-spacing: 0.02em; opacity: 0.95;
-  }
-  .pin-inline {
-    font-size: 14px; opacity: 0.9; line-height: 1; padding-left: 2px;
-  }
-
-  .location-text {
-    font-family: var(--sf-mono); font-size: 11px; letter-spacing: 0.02em;
-    color: var(--accent); opacity: 0.85; cursor: pointer;
-    padding: 1px 6px; border-radius: 4px; transition: background 0.2s ease;
-  }
-  .location-text:hover { background: rgba(212,165,116,0.1); }
-  .location-input {
-    font-family: var(--sf-mono); font-size: 11px; letter-spacing: 0.02em;
-    background: rgba(212,165,116,0.1); border: 1px solid rgba(212,165,116,0.4);
-    color: var(--accent); padding: 2px 6px; border-radius: 4px; outline: none; width: 200px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(212,165,116,0.4);
+    color: var(--fg); padding: 1px 5px; border-radius: 4px; outline: none; flex: 1;
   }
 
   .remove-btn {
     background: transparent; border: none; color: rgba(232,228,216,0.3);
-    cursor: pointer; padding: 4px; border-radius: 6px; opacity: 0;
+    cursor: pointer; padding: 3px; border-radius: 5px; opacity: 0;
     transition: all 0.2s ease; flex-shrink: 0;
     display: flex; align-items: center;
   }
@@ -327,21 +335,17 @@
   .sub-row:hover .remove-btn { opacity: 1; }
   .remove-btn:hover { color: #d97a6c; background: rgba(217,122,108,0.1); }
 
-  .sub-row { display: flex; align-items: center; gap: 8px; padding: 1px 0 1px 30px; }
+  .sub-items-wrap { margin-top: 2px; padding-bottom: 2px; }
+  .sub-row { display: flex; align-items: center; gap: 7px; padding: 0 0 0 56px; }
 
   .sub-add {
-    background: transparent; border: none; color: rgba(232,228,216,0.45);
-    cursor: pointer; font-family: var(--sf-mono); font-size: 10px;
-    letter-spacing: 0.12em; padding: 3px 8px; margin-left: 24px; margin-top: 2px;
+    background: transparent; border: none; color: rgba(232,228,216,0.4);
+    cursor: pointer; font-family: var(--sf-mono); font-size: 9px;
+    letter-spacing: 0.12em; padding: 2px 7px; margin-left: 50px; margin-top: 1px;
     border-radius: 4px; transition: all 0.2s ease;
     display: inline-flex; align-items: center; gap: 4px;
   }
   .sub-add:hover { color: var(--fg); background: rgba(255,255,255,0.04); }
-
-  .done-divider {
-    font-family: var(--sf-mono); font-size: 9px; letter-spacing: 0.3em;
-    opacity: 0.3; margin: 14px 4px 4px; text-align: left;
-  }
 
   .footer-hint {
     font-family: var(--sf-mono); font-size: 9px; opacity: 0.3;
@@ -533,6 +537,48 @@ let lastSpokenId = -1;
 let lastReminderTime = TASK_DURATION;
 let timerInterval = null;
 
+// ---- Undo history ----
+const UNDO_LIMIT = 50;
+const undoStack = [];
+
+// Snapshot the state fields that should be undoable. Excludes timer/play state.
+function snapshotState() {
+  return JSON.stringify({
+    tasks: state.tasks,
+    ids: state.ids,
+    completedIds: state.completedIds,
+    suitcaseRows: state.suitcaseRows,
+    manualIdx: state.manualIdx,
+    nextId: state.nextId,
+  });
+}
+
+function pushUndo() {
+  const snap = snapshotState();
+  // Don't push duplicates back-to-back
+  if (undoStack.length > 0 && undoStack[undoStack.length - 1] === snap) return;
+  undoStack.push(snap);
+  if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+}
+
+function undo() {
+  if (undoStack.length === 0) return;
+  const snap = undoStack.pop();
+  const parsed = JSON.parse(snap);
+  state.tasks = parsed.tasks;
+  state.ids = parsed.ids;
+  state.completedIds = parsed.completedIds;
+  state.suitcaseRows = parsed.suitcaseRows;
+  state.manualIdx = parsed.manualIdx;
+  state.nextId = parsed.nextId;
+  // Clear any in-progress edits since indices may have shifted
+  state.editingNameIdx = null;
+  state.editingLocationIdx = null;
+  state.editingSub = { taskIdx: null, subIdx: null };
+  state.editingSuitcaseRow = null;
+  render();
+}
+
 // ---- Derived ----
 function getOrder() {
   const active = [], done = [];
@@ -632,11 +678,13 @@ function startTimer() {
     if (!state.isRunning) return;
     state.timeLeft -= 1;
     if (state.timeLeft <= 0) {
-      // auto advance
+      // auto advance — mark current done & move strictly downward
       const cur = getCurrent();
       if (cur && !state.completedIds.includes(cur.id)) {
+        pushUndo();
         state.completedIds.push(cur.id);
       }
+      advanceToNextInList();
       state.timeLeft = TASK_DURATION;
       lastReminderTime = TASK_DURATION;
       checkSpeakOnTaskChange();
@@ -662,6 +710,22 @@ function startTimer() {
     }
     render();
   }, 1000);
+}
+
+// Move strictly downward in the list to the next task (whether or not it's completed).
+// If we're at the bottom, stop.
+function advanceToNextInList() {
+  const cur = getCurrent();
+  if (!cur) return;
+  const nextIdx = cur.idx + 1;
+  if (nextIdx < state.tasks.length) {
+    state.manualIdx = nextIdx;
+  } else {
+    // Reached the end — clear manual nav so getCurrent returns null (all done)
+    // or first uncompleted if any still exist
+    state.manualIdx = null;
+    state.isRunning = false;
+  }
 }
 
 function checkSpeakOnTaskChange() {
@@ -696,8 +760,10 @@ function handlePause() {
 function handleMarkDone() {
   const cur = getCurrent();
   if (!cur) return;
+  pushUndo();
   if (!state.completedIds.includes(cur.id)) state.completedIds.push(cur.id);
-  state.manualIdx = null; // clear manual nav — return to auto "first active"
+  // Move strictly downward (not to "first uncompleted")
+  advanceToNextInList();
   state.timeLeft = TASK_DURATION;
   lastReminderTime = TASK_DURATION;
   checkSpeakOnTaskChange();
@@ -705,6 +771,7 @@ function handleMarkDone() {
 }
 
 function toggleTaskDone(id) {
+  pushUndo();
   const cur = getCurrent();
   const wasCurrent = cur && cur.id === id;
   if (state.completedIds.includes(id)) {
@@ -721,6 +788,7 @@ function toggleTaskDone(id) {
 }
 
 function handleReset() {
+  pushUndo();
   state.isRunning = false;
   state.completedIds = [];
   state.timeLeft = TASK_DURATION;
@@ -751,6 +819,7 @@ function updateTaskLocation(idx, location) { state.tasks[idx].location = locatio
 function updateSubName(idx, j, name) { state.tasks[idx].items[j].name = name; render(); }
 
 function toggleSub(idx, j) {
+  pushUndo();
   const task = state.tasks[idx];
   if (!task || task.type !== 'group') return;
   task.items[j].done = !task.items[j].done;
@@ -773,17 +842,20 @@ function toggleSub(idx, j) {
 function addSubItem(idx) {
   const task = state.tasks[idx];
   if (!task || task.type !== 'group') return;
+  pushUndo();
   task.items.push({ name: "", done: false });
   state.editingSub = { taskIdx: idx, subIdx: task.items.length - 1 };
   render();
 }
 
 function removeSubItem(idx, j) {
+  pushUndo();
   state.tasks[idx].items.splice(j, 1);
   render();
 }
 
 function addTask() {
+  pushUndo();
   const newId = state.nextId++;
   state.tasks.push({ type: 'item', name: "", location: "" });
   state.ids.push(newId);
@@ -794,6 +866,7 @@ function addTask() {
 function quickAddTask(name) {
   const trimmed = (name || '').trim();
   if (!trimmed) return;
+  pushUndo();
   const newId = state.nextId++;
   state.tasks.push({ type: 'item', name: trimmed, location: "" });
   state.ids.push(newId);
@@ -807,6 +880,7 @@ function quickAddTask(name) {
 
 function reorderTask(fromIdx, toIdx) {
   if (fromIdx === toIdx) return;
+  pushUndo();
   // Move task and id together
   const [movedTask] = state.tasks.splice(fromIdx, 1);
   const [movedId] = state.ids.splice(fromIdx, 1);
@@ -819,7 +893,31 @@ function reorderTask(fromIdx, toIdx) {
   render();
 }
 
+// Play from any task — jump current to that task, un-complete it if needed,
+// reset timer to fresh 5min, and start. Continues downward from there.
+function playFromTask(idx) {
+  if (idx < 0 || idx >= state.tasks.length) return;
+  const id = state.ids[idx];
+  // Un-complete if it was marked done
+  if (state.completedIds.includes(id)) {
+    pushUndo();
+    state.completedIds = state.completedIds.filter(x => x !== id);
+  }
+  state.manualIdx = idx;
+  state.timeLeft = TASK_DURATION;
+  lastReminderTime = TASK_DURATION;
+  // Force re-speak even if same task id
+  lastSpokenId = -1;
+  state.hasStarted = true;
+  state.isRunning = true;
+  if (!state.muted) speak(buildSpeechIntro(state.tasks[idx]));
+  lastSpokenId = id;
+  startTimer();
+  render();
+}
+
 function removeTask(idx) {
+  pushUndo();
   const removedId = state.ids[idx];
   state.tasks.splice(idx, 1);
   state.ids.splice(idx, 1);
@@ -829,22 +927,26 @@ function removeTask(idx) {
 
 // ---- Suitcase row helpers ----
 function addSuitcaseRow() {
+  pushUndo();
   const n = state.suitcaseRows.length + 1;
   state.suitcaseRows.push({ name: `Row ${n}`, items: [] });
   state.editingSuitcaseRow = { rowIdx: state.suitcaseRows.length - 1, itemIdx: -1 };
   render();
 }
 function removeSuitcaseRow(ri) {
+  pushUndo();
   state.suitcaseRows.splice(ri, 1);
   state.editingSuitcaseRow = null;
   render();
 }
 function addSuitcaseItem(ri) {
+  pushUndo();
   state.suitcaseRows[ri].items.push("");
   state.editingSuitcaseRow = { rowIdx: ri, itemIdx: state.suitcaseRows[ri].items.length - 1 };
   render();
 }
 function removeSuitcaseItem(ri, ii) {
+  pushUndo();
   state.suitcaseRows[ri].items.splice(ii, 1);
   state.editingSuitcaseRow = null;
   render();
@@ -870,13 +972,21 @@ function renderTaskRow(task, idx, isCurrent, isDone) {
   let html = `<div class="task-item ${isCurrent ? 'task-current' : isDone ? 'task-done' : 'task-pending'}" data-idx="${idx}" draggable="true">`;
   html += `<div class="task-main-row">`;
 
-  // Drag handle
-  html += `<div class="drag-handle" title="Drag to reorder" aria-hidden="true"><svg width="16" height="16"><use href="#i-grip"/></svg></div>`;
-
   // Check circle
   html += `<div class="check-circle ${isDone ? 'done' : isCurrent ? 'current' : ''}" data-action="toggle-task" data-idx="${idx}" title="Toggle done">`;
   if (isDone) html += `<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="#1a1f2e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
   html += `</div>`;
+
+  // Play button — triangle, larger, rounded corners
+  const isPlayingThis = isCurrent && state.isRunning;
+  html += `<button class="task-play-btn ${isPlayingThis ? 'playing' : ''}" data-action="play-from" data-idx="${idx}" title="${isPlayingThis ? 'Currently playing' : 'Play from here'}">`;
+  if (isPlayingThis) {
+    html += `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>`;
+  } else {
+    // Rounded-corner triangle
+    html += `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"><path d="M7 4.5 L19 12 L7 19.5 Z"/></svg>`;
+  }
+  html += `</button>`;
 
   html += `<div class="task-body">`;
   html += `<div class="task-row">`;
@@ -890,16 +1000,13 @@ function renderTaskRow(task, idx, isCurrent, isDone) {
     html += `<span class="task-name-text ${isGroup ? 'group' : ''} ${struck} ${empty}" data-action="start-edit-name" data-idx="${idx}" title="Click to edit">${display}</span>`;
   }
 
-  // Inline pin + location all in one row, all editable
+  // Inline location — part of the text, no pin emoji
   if (isEditingLoc) {
-    html += `<span class="pin-inline">📍</span>`;
-    html += `<input autofocus class="location-input" data-action="edit-location" data-idx="${idx}" value="${escapeHtml(task.location)}" placeholder="where is it?" />`;
+    html += `<input autofocus class="location-input" data-action="edit-location" data-idx="${idx}" value="${escapeHtml(task.location)}" placeholder="location" />`;
   } else if (task.location) {
-    // Location exists — show 📍 + text together, click to edit
-    html += `<span class="pin-location-combo" data-action="toggle-location-edit" data-idx="${idx}" title="Click to edit location">📍 <span class="location-text-inline">${escapeHtml(task.location)}</span></span>`;
+    html += `<span class="location-inline" data-action="toggle-location-edit" data-idx="${idx}" title="Click to edit location">— ${escapeHtml(task.location)}</span>`;
   } else {
-    // No location — show faint 📍 to add one
-    html += `<span class="pin-add" data-action="toggle-location-edit" data-idx="${idx}" title="Add location">📍</span>`;
+    html += `<span class="location-add" data-action="toggle-location-edit" data-idx="${idx}" title="Add location">+ location</span>`;
   }
 
   html += `</div>`;
@@ -910,12 +1017,12 @@ function renderTaskRow(task, idx, isCurrent, isDone) {
   html += `</div>`; // main-row
 
   if (isGroup) {
-    html += `<div style="margin-top:4px">`;
+    html += `<div class="sub-items-wrap">`;
     task.items.forEach((sub, j) => {
       const isEditingThis = state.editingSub.taskIdx === idx && state.editingSub.subIdx === j;
       html += `<div class="sub-row">`;
       html += `<div class="check-small ${sub.done ? 'done' : ''}" data-action="toggle-sub" data-idx="${idx}" data-sub="${j}" title="Toggle done">`;
-      if (sub.done) html += `<svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#0a0d14" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+      if (sub.done) html += `<svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="#0a0d14" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
       html += `</div>`;
       if (isEditingThis) {
         html += `<input autofocus class="sub-item-input" data-action="edit-sub" data-idx="${idx}" data-sub="${j}" value="${escapeHtml(sub.name)}" />`;
@@ -924,10 +1031,10 @@ function renderTaskRow(task, idx, isCurrent, isDone) {
         const display = sub.name ? escapeHtml(sub.name) : '<span style="opacity:0.4;font-style:italic">untitled</span>';
         html += `<span class="sub-item-text ${struck}" data-action="start-edit-sub" data-idx="${idx}" data-sub="${j}" title="Click to edit">${display}</span>`;
       }
-      html += `<button class="remove-btn" data-action="remove-sub" data-idx="${idx}" data-sub="${j}" title="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+      html += `<button class="remove-btn" data-action="remove-sub" data-idx="${idx}" data-sub="${j}" title="Remove"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
       html += `</div>`;
     });
-    html += `<button class="sub-add" data-action="add-sub" data-idx="${idx}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> ADD ITEM</button>`;
+    html += `<button class="sub-add" data-action="add-sub" data-idx="${idx}"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> ADD ITEM</button>`;
     html += `</div>`;
   }
 
@@ -1085,15 +1192,13 @@ function render() {
         />
       </div>
   `;
-  active.forEach((entry, i) => {
-    listHtml += renderTaskRow(state.tasks[entry.idx], entry.idx, i === 0, false);
+  // Render all tasks in their natural order — done ones stay in place, just faded.
+  state.tasks.forEach((task, i) => {
+    const id = state.ids[i];
+    const isDone = state.completedIds.includes(id);
+    const isCurrent = cur && cur.idx === i;
+    listHtml += renderTaskRow(task, i, isCurrent, isDone);
   });
-  if (done.length > 0) {
-    listHtml += `<div class="done-divider">PACKED</div>`;
-    done.forEach(entry => {
-      listHtml += renderTaskRow(state.tasks[entry.idx], entry.idx, false, true);
-    });
-  }
   listHtml += `</div>`;
 
   document.getElementById('app').innerHTML = `
@@ -1116,11 +1221,11 @@ function render() {
         <svg width="20" height="20" aria-hidden="true"><use href="#i-chev-right"/></svg>
       </button>
     </div>
-    <div class="kbd-hint"><span class="kbd">←</span> <span class="kbd">→</span> NAV &nbsp;·&nbsp; <span class="kbd">SPACE</span> START / PAUSE &nbsp;·&nbsp; <span class="kbd">↵</span> MARK DONE</div>
+    <div class="kbd-hint"><span class="kbd">←</span> <span class="kbd">→</span> NAV &nbsp;·&nbsp; <span class="kbd">SPACE</span> START / PAUSE &nbsp;·&nbsp; <span class="kbd">↵</span> MARK DONE &nbsp;·&nbsp; <span class="kbd">⌘Z</span> UNDO</div>
     <div class="controls">${controlsHtml}</div>
     ${listHtml}
     ${renderSuitcase()}
-    <div class="footer-hint">TAP ANY TEXT (TASK NAME, 📍 LOCATION, ITEM) TO EDIT</div>
+    <div class="footer-hint">TAP ANY TEXT TO EDIT &nbsp;·&nbsp; DRAG ROWS TO REORDER</div>
   `;
 
   // Focus inputs that just appeared
@@ -1177,18 +1282,21 @@ document.addEventListener('click', (e) => {
     case 'toggle-task': toggleTaskDone(state.ids[idx]); break;
     case 'toggle-sub': toggleSub(idx, sub); break;
     case 'start-edit-name':
+      pushUndo();
       state.editingNameIdx = idx;
       state.editingLocationIdx = null;
       state.editingSub = { taskIdx: null, subIdx: null };
       render();
       break;
     case 'toggle-location-edit':
+      if (state.editingLocationIdx !== idx) pushUndo();
       state.editingLocationIdx = state.editingLocationIdx === idx ? null : idx;
       state.editingNameIdx = null;
       state.editingSub = { taskIdx: null, subIdx: null };
       render();
       break;
     case 'start-edit-sub':
+      pushUndo();
       state.editingSub = { taskIdx: idx, subIdx: sub };
       state.editingNameIdx = null;
       state.editingLocationIdx = null;
@@ -1204,6 +1312,9 @@ document.addEventListener('click', (e) => {
     case 'next-task':
       if (target.getAttribute('aria-disabled') !== 'true') goToNextTask();
       break;
+    case 'play-from':
+      playFromTask(idx);
+      break;
     case 'add-sc-row': addSuitcaseRow(); break;
     case 'remove-sc-row':
       e.stopPropagation();
@@ -1215,10 +1326,12 @@ document.addEventListener('click', (e) => {
       removeSuitcaseItem(parseInt(target.dataset.row, 10), parseInt(target.dataset.item, 10));
       break;
     case 'start-edit-sc-row-name':
+      pushUndo();
       state.editingSuitcaseRow = { rowIdx: parseInt(target.dataset.row, 10), itemIdx: -1 };
       render();
       break;
     case 'start-edit-sc-item':
+      pushUndo();
       state.editingSuitcaseRow = {
         rowIdx: parseInt(target.dataset.row, 10),
         itemIdx: parseInt(target.dataset.item, 10),
@@ -1280,6 +1393,16 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+// Global undo — Cmd/Ctrl+Z works everywhere, even inside inputs
+document.addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && (e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
+    // Don't fight the browser inside the quick-add input if it has unsaved typing
+    // (browser native undo for the textfield itself is also acceptable, but we override).
+    e.preventDefault();
+    undo();
+  }
+});
+
 // Global keyboard shortcuts — ignored while editing
 document.addEventListener('keydown', (e) => {
   // If user is typing in an input, ignore all shortcuts
@@ -1325,24 +1448,25 @@ document.addEventListener('keydown', (e) => {
 // ---- Drag and drop ----
 let dragSrcIdx = null;
 
-// Only allow drag start when initiated from the drag handle
+// Whole task row is draggable. But don't initiate drag from inputs.
 document.addEventListener('mousedown', (e) => {
-  const handle = e.target.closest && e.target.closest('.drag-handle');
   const item = e.target.closest && e.target.closest('.task-item');
   if (!item) return;
-  // If clicking inside the row but NOT on the handle, disable dragging for this gesture
-  if (handle) {
-    item.setAttribute('draggable', 'true');
-  } else {
+  // If clicking on an input, disable dragging so text selection works
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
     item.setAttribute('draggable', 'false');
+  } else {
+    item.setAttribute('draggable', 'true');
   }
 });
 
 document.addEventListener('dragstart', (e) => {
   const item = e.target.closest && e.target.closest('.task-item');
   if (!item) return;
-  if (e.target.tagName === 'INPUT') { e.preventDefault(); return; }
-  // Only drag if draggable is currently true (set by handle mousedown)
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+    e.preventDefault();
+    return;
+  }
   if (item.getAttribute('draggable') !== 'true') { e.preventDefault(); return; }
   dragSrcIdx = parseInt(item.dataset.idx, 10);
   item.classList.add('dragging');
