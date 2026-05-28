@@ -262,6 +262,12 @@
     font-weight: 500; letter-spacing: -0.01em;
     padding: 2px 0;
   }
+  /* Textarea variant of the quick-add */
+  textarea.quick-add-input {
+    resize: none; overflow-y: auto;
+    line-height: 1.4; min-height: 20px; max-height: 200px;
+    font-family: var(--sf-display);
+  }
   .quick-add-input::placeholder {
     color: rgba(232,228,216,0.35); font-style: italic; font-weight: 400;
   }
@@ -342,6 +348,14 @@
     cursor: pointer;
   }
   .task-item input { cursor: text; }
+
+  /* Allow drag-select / copy on all text-bearing elements */
+  .task-name-text, .task-tag, .location-inline, .location-add,
+  .sub-item-text, .uf-name, .center-task-name, .center-sub,
+  .center-location {
+    -webkit-user-select: text;
+    user-select: text;
+  }
 
   .list-label { font-family: var(--sf-mono); font-size: 10px; letter-spacing: 0.3em; opacity: 0.4; }
   .add-btn {
@@ -1613,24 +1627,18 @@ function addTask() {
   }, 0);
 }
 
-function quickAddTask(name, location) {
-  const trimmed = (name || '').trim();
-  if (!trimmed) return;
+// Add a single task (no splitting). Returns true if added to main list.
+function addSingleTask(rawName, location) {
+  const trimmed = (rawName || '').trim();
+  if (!trimmed) return false;
   const loc = (location || '').trim();
-  pushUndo();
-  // If the typed task is tagged #unfurnished, put it straight in the unfurnished list.
+  // If tagged #unfurnished, route to the unfurnished list instead.
   if (extractTags(trimmed).map(t => t.toLowerCase()).includes('unfurnished')) {
     const text = trimmed.replace(/\s*#unfurnished\b/gi, '').trim();
     state.unfurnished.push(text || '(untitled)');
-    render();
-    setTimeout(() => {
-      const qa = document.getElementById('quick-add');
-      if (qa) qa.focus();
-    }, 0);
-    return;
+    return true;
   }
   const newId = state.nextId++;
-  // If user typed a leading emoji, use it; otherwise leave it empty.
   const split = splitLeadingEmoji(trimmed);
   const emoji = split.emoji; // may be ''
   const taskName = split.emoji ? split.rest : trimmed;
@@ -1638,8 +1646,33 @@ function quickAddTask(name, location) {
   state.tasks.unshift({ type: 'item', emoji, name: taskName, location: loc });
   state.ids.unshift(newId);
   if (state.manualIdx !== null) state.manualIdx += 1;
+  return true;
+}
+
+// Quick-add: accepts one or many items. Splits on newlines (and commas) so the
+// user can paste/type a whole list at once and get separate tasks.
+function quickAddTask(name, location) {
+  const raw = (name || '');
+  if (!raw.trim()) return;
+  // Split on newlines first; if it's a single line, also allow comma separation.
+  let parts = raw.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  if (parts.length <= 1) {
+    parts = raw.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  if (parts.length === 0) return;
+
+  pushUndo();
+  // Add in reverse so the first typed item ends up at the very top
+  // (since each addSingleTask unshifts to position 0).
+  let addedAny = false;
+  for (let i = parts.length - 1; i >= 0; i--) {
+    // Only the first item (top of the list) gets the location, to keep it simple.
+    const loc = (i === 0) ? location : '';
+    if (addSingleTask(parts[i], loc)) addedAny = true;
+  }
+  if (!addedAny) return;
   render();
-  // Scroll to the new task and re-focus the quick-add input
+  // Scroll to the top task and re-focus the quick-add input
   setTimeout(() => {
     const el = document.querySelector(`.task-item[data-idx="0"]`);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -2305,10 +2338,9 @@ function render() {
         <div class="quick-add-plus">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         </div>
-        <input type="text" class="quick-add-input" id="quick-add"
-          placeholder="Type a new task and press Enter…"
-          autocomplete="off"
-        />
+        <textarea class="quick-add-input" id="quick-add" rows="1"
+          placeholder="Add a task — or paste/type many (one per line or comma). Enter to add."
+          autocomplete="off"></textarea>
         <input type="text" class="quick-add-location" id="quick-add-location"
           placeholder="📍 location"
           autocomplete="off"
@@ -2412,6 +2444,9 @@ function render() {
   const qa = document.getElementById('quick-add');
   if (qa) {
     qa.value = qaValue;
+    // Re-fit the textarea height to its content
+    qa.style.height = 'auto';
+    if (qaValue) qa.style.height = Math.min(qa.scrollHeight, 200) + 'px';
     if (qaHadFocus) {
       qa.focus();
       try { qa.setSelectionRange(qaSelStart, qaSelEnd); } catch {}
@@ -2713,10 +2748,11 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Quick-add input — submit on Enter
+// Quick-add input — submit on Enter (Shift+Enter inserts a newline in the textarea)
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Enter') return;
   if (e.target && (e.target.id === 'quick-add' || e.target.id === 'quick-add-location')) {
+    if (e.shiftKey) return; // allow newline in the textarea
     e.preventDefault();
     const nameEl = document.getElementById('quick-add');
     const locEl = document.getElementById('quick-add-location');
@@ -2724,6 +2760,7 @@ document.addEventListener('keydown', (e) => {
     const loc = locEl ? locEl.value : '';
     if (nameEl) nameEl.value = '';
     if (locEl) locEl.value = '';
+    if (nameEl) nameEl.style.height = 'auto';
     quickAddTask(val, loc);
   } else if (e.target && e.target.id === 'unfurnished-quick-add') {
     e.preventDefault();
@@ -2741,15 +2778,59 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+// Auto-grow the quick-add textarea as the user types/pastes multiple lines
+document.addEventListener('input', (e) => {
+  if (e.target && e.target.id === 'quick-add') {
+    e.target.style.height = 'auto';
+    e.target.style.height = Math.min(e.target.scrollHeight, 200) + 'px';
+  }
+});
+
+// Multi-line paste into the UNFURNISHED add box → split into separate items.
+// (The main quick-add is now a textarea, so pasted text just lands there
+// visibly and the user presses Enter to add — each line becomes a task.)
+document.addEventListener('paste', (e) => {
+  const t = e.target;
+  if (!t || t.id !== 'unfurnished-quick-add') return;
+  const text = (e.clipboardData || window.clipboardData).getData('text');
+  if (!text) return;
+  const isMulti = /\r?\n/.test(text) || /,/.test(text);
+  if (!isMulti) return;
+  e.preventDefault();
+  t.value = '';
+  let parts = text.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  if (parts.length <= 1) parts = text.split(',').map(s => s.trim()).filter(Boolean);
+  if (parts.length) {
+    pushUndo();
+    parts.forEach(p => state.unfurnished.push(p));
+    render();
+    setTimeout(() => {
+      const el = document.getElementById('unfurnished-quick-add');
+      if (el) el.focus();
+    }, 0);
+  }
+});
+
 // ---- Drag and drop ----
 let dragSrcIdx = null;
 
-// Whole task row is draggable. But don't initiate drag from inputs.
+// Whole task row is draggable, EXCEPT when the user is interacting with text
+// they might want to select/copy (the name, tags, location, sub-items).
+function isSelectableTarget(el) {
+  if (!el) return false;
+  if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return true;
+  // Any of the text-bearing elements should allow selection, not drag
+  return !!(el.closest && el.closest(
+    '.task-name-text, .task-tag, .location-inline, .location-add, .sub-item-text, .center-task-name'
+  ));
+}
+
 document.addEventListener('mousedown', (e) => {
   const item = e.target.closest && e.target.closest('.task-item');
   if (!item) return;
-  // If clicking on an input, disable dragging so text selection works
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+  // If pressing on selectable text or an input, disable dragging so the user
+  // can drag-select and copy the text.
+  if (isSelectableTarget(e.target)) {
     item.setAttribute('draggable', 'false');
   } else {
     item.setAttribute('draggable', 'true');
@@ -2759,7 +2840,7 @@ document.addEventListener('mousedown', (e) => {
 document.addEventListener('dragstart', (e) => {
   const item = e.target.closest && e.target.closest('.task-item');
   if (!item) return;
-  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+  if (isSelectableTarget(e.target)) {
     e.preventDefault();
     return;
   }
