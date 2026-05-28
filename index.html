@@ -61,8 +61,15 @@
     font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
   }
   .center-location {
-    font-family: var(--sf-mono); font-size: 11px; color: var(--accent);
-    opacity: 0.85; margin-bottom: 6px; letter-spacing: 0.02em;
+    display: inline-block;
+    font-family: var(--sf-display); font-size: 11px;
+    color: var(--accent);
+    background: rgba(212, 165, 116, 0.12);
+    border: 1px solid rgba(212, 165, 116, 0.35);
+    padding: 2px 10px; border-radius: 999px;
+    margin-top: 4px; margin-bottom: 6px;
+    letter-spacing: 0.01em;
+    font-weight: 600;
   }
   .center-sub-list { margin: 2px 0 6px; max-width: 220px; }
   .center-sub {
@@ -260,6 +267,29 @@
   .quick-add-input::placeholder {
     color: rgba(232,228,216,0.35); font-style: italic; font-weight: 400;
   }
+  /* Location field on the far right of the quick-add row */
+  .quick-add-location {
+    flex-shrink: 0;
+    width: 120px;
+    background: rgba(212,165,116,0.08);
+    border: 1px solid rgba(212,165,116,0.25);
+    border-radius: 999px; outline: none;
+    color: var(--accent);
+    font-family: var(--sf-display); font-size: 12px;
+    font-weight: 500; letter-spacing: -0.005em;
+    padding: 4px 10px;
+    transition: all 0.2s ease;
+  }
+  .quick-add-location:focus {
+    border-color: rgba(212,165,116,0.6);
+    background: rgba(212,165,116,0.14);
+  }
+  .quick-add-location::placeholder {
+    color: rgba(212,165,116,0.45); font-style: italic; font-weight: 400;
+  }
+  @media (max-width: 460px) {
+    .quick-add-location { width: 90px; }
+  }
 
   /* Drag-and-drop — whole row is draggable, no handle */
   .task-item.dragging {
@@ -309,7 +339,8 @@
   .task-item .sub-item-text,
   .task-item .sub-add,
   .task-item .check-small,
-  .task-item .task-play-btn {
+  .task-item .task-play-btn,
+  .task-item .task-tag {
     cursor: pointer;
   }
   .task-item input { cursor: text; }
@@ -330,31 +361,51 @@
     border: 1px solid transparent; position: relative;
   }
   .task-current { background: rgba(212,165,116,0.08); border-color: rgba(212,165,116,0.3); }
-  .task-done { opacity: 0.35; }
+  .task-done { opacity: 0.55; }
   .task-pending { opacity: 0.9; }
 
   .task-main-row { display: flex; align-items: center; gap: 9px; }
   .task-body { flex: 1; min-width: 0; }
   .task-row { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
 
+  /* Right-side slot for tags + location — always stays right, never wraps below */
+  .task-location-slot {
+    flex-shrink: 0;
+    display: flex; align-items: center; gap: 5px;
+    min-height: 17px;
+    justify-content: flex-end;
+    flex-wrap: wrap; max-width: 55%;
+  }
+  /* Tag pills inside the slot shouldn't have the left margin they use elsewhere */
+  .task-location-slot .task-tag { margin-left: 0; }
+
   .check-circle {
     width: 17px; height: 17px; border-radius: 50%;
     border: 1.5px solid rgba(232,228,216,0.3); flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: border-color 0.2s ease;
+    cursor: pointer; transition: all 0.2s ease;
   }
-  .check-circle:hover { border-color: rgba(232,228,216,0.6); }
+  .check-circle:hover { border-color: rgba(232,228,216,0.6); transform: scale(1.1); }
   .check-circle.done { background: var(--green); border-color: var(--green); }
+  .check-circle.done:hover {
+    background: #d97a6c; border-color: #d97a6c;
+    transform: scale(1.1);
+  }
   .check-circle.current { border-color: var(--accent); background: rgba(212,165,116,0.15); }
+  .check-circle[title]:hover::after { content: ""; }
 
   .check-small {
     width: 13px; height: 13px; border-radius: 50%;
     border: 1.5px solid rgba(232,228,216,0.3); flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    cursor: pointer; transition: border-color 0.2s ease;
+    cursor: pointer; transition: all 0.2s ease;
   }
-  .check-small:hover { border-color: rgba(232,228,216,0.6); }
+  .check-small:hover { border-color: rgba(232,228,216,0.6); transform: scale(1.15); }
   .check-small.done { background: var(--green); border-color: var(--green); }
+  .check-small.done:hover {
+    background: #d97a6c; border-color: #d97a6c;
+    transform: scale(1.15);
+  }
 
   .task-name-text {
     font-size: 13px; font-weight: 500; cursor: pointer;
@@ -363,8 +414,38 @@
   }
   .task-name-text.group { font-weight: 700; font-size: 14px; letter-spacing: -0.015em; }
   .task-name-text:hover { background: rgba(255,255,255,0.06); }
-  .task-name-text.struck { text-decoration: line-through; text-decoration-color: rgba(232,228,216,0.4); }
+  .task-name-text.struck {
+    text-decoration: line-through;
+    text-decoration-color: rgba(232, 228, 216, 0.85);
+    text-decoration-thickness: 2px;
+    text-decoration-skip-ink: none;
+  }
   .task-name-text.empty { opacity: 0.4; font-style: italic; }
+
+  /* Category tag pills (#sleep, #urgent, etc.) — rounded, colored pill next to task title */
+  .task-tag {
+    display: inline-block;
+    font-family: var(--sf-display);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    padding: 1px 8px;
+    border-radius: 999px;
+    border: 1px solid;
+    line-height: 1.5;
+    margin-left: 5px;
+    vertical-align: baseline;
+    cursor: pointer;
+    transition: filter 0.18s ease, transform 0.18s ease;
+    white-space: nowrap;
+  }
+  .task-tag:hover { filter: brightness(1.25); transform: translateY(-1px); }
+
+  /* Tag pills inside the big center circle */
+  .center-tags {
+    display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;
+    margin-top: 4px; margin-bottom: 4px;
+  }
 
   /* Emoji next to task / sub-item name */
   .task-emoji {
@@ -386,22 +467,27 @@
   }
   .task-name-input.group { font-weight: 700; font-size: 14px; }
 
-  /* Inline location — part of the text, no pin emoji */
+  /* Right-side location styling */
   .location-inline {
     font-family: var(--sf-display); font-size: 12px;
     color: var(--accent); opacity: 0.85;
-    cursor: pointer; padding: 1px 4px; margin: -1px -4px;
-    border-radius: 4px; transition: background 0.2s ease;
+    cursor: pointer; padding: 2px 8px;
+    background: rgba(212,165,116,0.08);
+    border-radius: 999px;
+    transition: background 0.2s ease;
     letter-spacing: -0.005em;
+    white-space: nowrap;
   }
-  .location-inline:hover { background: rgba(212,165,116,0.1); }
+  .location-inline:hover { background: rgba(212,165,116,0.16); }
 
   .location-add {
     font-family: var(--sf-display); font-size: 11px;
     color: rgba(232,228,216,0.3); cursor: pointer;
-    padding: 1px 5px; border-radius: 4px;
+    padding: 2px 8px; border-radius: 999px;
+    border: 1px dashed rgba(232,228,216,0.18);
     transition: all 0.2s ease;
     opacity: 0; font-style: italic;
+    white-space: nowrap;
   }
   .task-item:hover .location-add { opacity: 1; }
   .location-add:hover { color: var(--accent); background: rgba(212,165,116,0.08); }
@@ -409,8 +495,8 @@
   .location-input {
     font-family: var(--sf-display); font-size: 12px;
     background: rgba(212,165,116,0.1); border: 1px solid rgba(212,165,116,0.4);
-    color: var(--accent); padding: 1px 6px; border-radius: 4px; outline: none;
-    width: 180px;
+    color: var(--accent); padding: 2px 8px; border-radius: 999px; outline: none;
+    width: 140px;
   }
 
   .sub-item-text {
@@ -419,7 +505,13 @@
     letter-spacing: -0.005em;
   }
   .sub-item-text:hover { background: rgba(255,255,255,0.06); }
-  .sub-item-text.struck { text-decoration: line-through; text-decoration-color: rgba(232,228,216,0.4); opacity: 0.5; }
+  .sub-item-text.struck {
+    text-decoration: line-through;
+    text-decoration-color: rgba(232, 228, 216, 0.85);
+    text-decoration-thickness: 2px;
+    text-decoration-skip-ink: none;
+    opacity: 0.6;
+  }
   .sub-item-input {
     font-family: var(--sf-display); font-size: 12px;
     background: rgba(255,255,255,0.08); border: 1px solid rgba(212,165,116,0.4);
@@ -452,9 +544,81 @@
     font-family: var(--sf-mono); font-size: 9px; opacity: 0.3;
     margin-top: 20px; letter-spacing: 0.2em; text-align: center;
   }
+  .reset-link {
+    cursor: pointer; transition: color 0.2s ease;
+  }
+  .reset-link:hover { color: #d97a6c; opacity: 1; }
 
   .suitcase-section { width: 100%; max-width: 460px; margin-top: 28px; }
   .suitcase-svg { width: 100%; height: auto; display: block; }
+
+  /* ---- Unfurnished list (second checklist, big gap above) ---- */
+  .unfurnished-gap { height: 56px; width: 100%; }
+  .unfurnished-section { width: 100%; max-width: 460px; }
+  .unfurnished-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 4px; padding: 0 4px;
+  }
+  .unfurnished-title {
+    font-family: var(--sf-mono); font-size: 11px;
+    letter-spacing: 0.3em; color: var(--accent); font-weight: 700;
+  }
+  .unfurnished-subtitle {
+    font-family: var(--sf-display); font-size: 12px;
+    color: rgba(232,228,216,0.45); margin-bottom: 12px; padding: 0 4px;
+    font-style: italic; letter-spacing: -0.005em;
+  }
+  .unfurnished-body {
+    border: 1.5px solid rgba(212,165,116,0.3);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(212,165,116,0.06) 0%, rgba(212,165,116,0.02) 100%);
+    padding: 6px;
+    box-shadow: inset 0 0 0 1px rgba(212,165,116,0.1);
+  }
+  .uf-empty {
+    text-align: center; padding: 16px; font-size: 12px;
+    color: rgba(232,228,216,0.3); font-style: italic;
+  }
+  .uf-row {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 8px;
+    border-bottom: 1px solid rgba(232,228,216,0.06);
+  }
+  .uf-row:last-child { border-bottom: none; }
+  .uf-check {
+    width: 17px; height: 17px; border-radius: 50%;
+    border: 1.5px solid rgba(232,228,216,0.3); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: all 0.2s ease;
+  }
+  .uf-check:hover { border-color: rgba(232,228,216,0.6); transform: scale(1.1); }
+  .uf-check.done { background: var(--green); border-color: var(--green); }
+  .uf-check.done:hover { background: #d97a6c; border-color: #d97a6c; }
+  .uf-name {
+    flex: 1; font-size: 13px; cursor: pointer;
+    padding: 1px 5px; margin: -1px -5px; border-radius: 5px;
+    transition: background 0.2s ease; letter-spacing: -0.005em;
+  }
+  .uf-name:hover { background: rgba(255,255,255,0.06); }
+  .uf-name.struck {
+    text-decoration: line-through;
+    text-decoration-color: rgba(232,228,216,0.85);
+    text-decoration-thickness: 2px;
+    text-decoration-skip-ink: none;
+    opacity: 0.55;
+  }
+  .uf-input {
+    flex: 1; font-family: var(--sf-display); font-size: 13px;
+    background: rgba(212,165,116,0.1); border: 1px solid rgba(212,165,116,0.4);
+    color: var(--fg); padding: 2px 8px; border-radius: 6px; outline: none;
+  }
+  .uf-remove {
+    background: transparent; border: none; color: rgba(232,228,216,0.3);
+    cursor: pointer; padding: 2px; display: flex; flex-shrink: 0;
+    transition: color 0.2s ease;
+  }
+  .uf-remove:hover { color: #d97a6c; }
+  .uf-row.uf-done { opacity: 0.7; }
 
   .suitcase-header {
     display: flex; justify-content: space-between; align-items: center;
@@ -583,57 +747,154 @@ const DEFAULT_TASKS = [
   { type: 'item', emoji: "🔑", name: "Redwood keys", location: "" },
   { type: 'item', emoji: "👶", name: "Diapers", location: "" },
   { type: 'item', emoji: "🪪", name: "ID etc", location: "" },
-  { type: 'group', emoji: "🍿", name: "Snacks", location: "", items: [
-    { emoji: "🍠", name: "Taro chips", done: false },
-    { emoji: "🥜", name: "88 Acres bars", done: false },
-    { emoji: "🍴", name: "Wooden forks", done: false },
-    { emoji: "🥣", name: "Compostable bowls", done: false },
-  ]},
-  { type: 'group', emoji: "💊", name: "Meds", location: "", items: [
-    { emoji: "🌿", name: "Mints", done: false },
-    { emoji: "💊", name: "Zofran", done: false },
-  ]},
-  { type: 'group', emoji: "🍵", name: "Teas", location: "", items: [
-    { emoji: "☕", name: "Kettle", done: false },
-    { emoji: "🌱", name: "Peppermint tea", done: false },
-    { emoji: "🫒", name: "Olive leaf key", done: false },
-  ]},
-  { type: 'group', emoji: "👝", name: "Fanny pack", location: "", items: [
-    { emoji: "💆", name: "Shoulder massager", done: false },
-  ]},
-  { type: 'group', emoji: "🍳", name: "Kitchen", location: "", items: [] },
-  { type: 'group', emoji: "🚪", name: "Before leaving the home", location: "", items: [
-    { emoji: "📦", name: "Open Amazon packages", done: false },
-    { emoji: "↩️", name: "Pack Amazon returns", done: false },
-    { emoji: "🔋", name: "Charge massager", done: false },
-    { emoji: "🔒", name: "Lock the door", done: false },
-  ]},
+  // Snacks
+  { type: 'item', emoji: "🍠", name: "Taro chips #snacks", location: "" },
+  { type: 'item', emoji: "🥜", name: "88 Acres bars #snacks", location: "" },
+  { type: 'item', emoji: "🍴", name: "Wooden forks #snacks", location: "" },
+  { type: 'item', emoji: "🥣", name: "Compostable bowls #snacks", location: "" },
+  // Meds
+  { type: 'item', emoji: "🌿", name: "Mints #meds", location: "" },
+  { type: 'item', emoji: "💊", name: "Zofran #meds", location: "" },
+  // Teas
+  { type: 'item', emoji: "☕", name: "Kettle #teas", location: "" },
+  { type: 'item', emoji: "🌱", name: "Peppermint tea #teas", location: "" },
+  { type: 'item', emoji: "🫒", name: "Olive leaf key #teas", location: "" },
+  // Fanny pack
+  { type: 'item', emoji: "💆", name: "Shoulder massager #fannypack", location: "" },
+  // Before leaving the home
+  { type: 'item', emoji: "📦", name: "Open Amazon packages #beforeleaving", location: "" },
+  { type: 'item', emoji: "↩️", name: "Pack Amazon returns #beforeleaving", location: "" },
+  { type: 'item', emoji: "🔋", name: "Charge massager #beforeleaving", location: "" },
+  { type: 'item', emoji: "🔒", name: "Lock the door #beforeleaving", location: "" },
 ];
 
 // ---- App State ----
+// Persisted to localStorage so your edits, checks, and additions survive
+// page reloads AND any future updates to the app code.
+const STORAGE_KEY = 'packing-assistant-state-v1';
+
+function loadPersistedState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    // Sanity check: must have tasks array & ids array of matching length
+    if (!parsed || !Array.isArray(parsed.tasks) || !Array.isArray(parsed.ids)) return null;
+    if (parsed.tasks.length !== parsed.ids.length) return null;
+
+    // Migration: flatten any old group-type tasks into individual items
+    // with a #tag matching the original group name. Preserves the user's
+    // sub-item edits, emojis, and completion state.
+    const hasGroups = parsed.tasks.some(t => t.type === 'group');
+    if (hasGroups) {
+      const newTasks = [];
+      const newIds = [];
+      let nextId = parsed.nextId || 0;
+      parsed.tasks.forEach((task, i) => {
+        const groupId = parsed.ids[i];
+        if (task.type === 'group') {
+          // Make a hashtag from the group name (e.g. "Fanny pack" → "#fannypack")
+          const tag = '#' + (task.name || 'group').toLowerCase().replace(/[^a-z0-9_-]/g, '');
+          (task.items || []).forEach(item => {
+            const baseName = (item.name || '').trim();
+            // Don't duplicate the tag if it's somehow already present
+            const finalName = baseName.includes(tag) ? baseName : `${baseName} ${tag}`.trim();
+            newTasks.push({
+              type: 'item',
+              emoji: item.emoji !== undefined ? item.emoji : '',
+              name: finalName,
+              location: task.location || '',
+            });
+            // Preserve sub-item completion: use a fresh id, mark complete if it was done
+            const newId = nextId++;
+            newIds.push(newId);
+            if (item.done) {
+              parsed.completedIds = parsed.completedIds || [];
+              parsed.completedIds.push(newId);
+            }
+          });
+          // The group's own completedId is no longer meaningful — drop it
+          if (parsed.completedIds) {
+            parsed.completedIds = parsed.completedIds.filter(x => x !== groupId);
+          }
+        } else {
+          newTasks.push(task);
+          newIds.push(groupId);
+        }
+      });
+      parsed.tasks = newTasks;
+      parsed.ids = newIds;
+      parsed.nextId = nextId;
+    }
+
+    return parsed;
+  } catch (e) {
+    console.warn('Failed to load saved state:', e);
+    return null;
+  }
+}
+
+function buildDefaultState() {
+  return {
+    // All tasks are flat items now; tags replace groups
+    tasks: DEFAULT_TASKS.map(t => ({ ...t })),
+    ids: DEFAULT_TASKS.map((_, i) => i),
+    nextId: DEFAULT_TASKS.length,
+    completedIds: [],
+    suitcaseRows: [
+      { name: "Row 1", items: ["Contact lenses"] },
+    ],
+  };
+}
+
+const persisted = loadPersistedState();
+const base = persisted || buildDefaultState();
+
 const state = {
-  tasks: DEFAULT_TASKS.map(t => t.type === 'group'
-    ? { ...t, items: t.items.map(it => ({ ...it })) }
-    : { ...t }),
-  ids: DEFAULT_TASKS.map((_, i) => i),
-  nextId: DEFAULT_TASKS.length,
-  completedIds: [],
+  tasks: base.tasks,
+  ids: base.ids,
+  nextId: base.nextId,
+  completedIds: base.completedIds || [],
+  suitcaseRows: base.suitcaseRows || [{ name: "Row 1", items: ["Contact lenses"] }],
+  // Second checklist: things needed if the place were unfurnished
+  unfurnished: base.unfurnished || [],
+  unfurnishedDone: base.unfurnishedDone || [],
+  editingUnfurnished: null, // index being edited, or null
+  // Runtime/transient state — never persisted
   timeLeft: TASK_DURATION,
   isRunning: false,
   hasStarted: false,
   muted: false,
-  volume: 1.0, // 0.0 to 1.0
+  volume: 1.0,
   manualIdx: null,
-  // edit state
   editingNameIdx: null,
   editingLocationIdx: null,
   editingSub: { taskIdx: null, subIdx: null },
-  // Suitcase sections — Red suitcase, top-down
-  suitcaseRows: [
-    { name: "Row 1", items: ["Contact lenses"] },
-  ],
-  editingSuitcaseRow: null, // { rowIdx, itemIdx } or { rowIdx, itemIdx: -1 } for row name
+  editingSuitcaseRow: null,
 };
+
+// Save the persistable parts of state. Called after every mutation.
+let saveDebounceTimer = null;
+function savePersistedState() {
+  // Debounce slightly so rapid keystrokes don't hammer localStorage
+  if (saveDebounceTimer) clearTimeout(saveDebounceTimer);
+  saveDebounceTimer = setTimeout(() => {
+    try {
+      const toSave = {
+        tasks: state.tasks,
+        ids: state.ids,
+        nextId: state.nextId,
+        completedIds: state.completedIds,
+        suitcaseRows: state.suitcaseRows,
+        unfurnished: state.unfurnished,
+        unfurnishedDone: state.unfurnishedDone,
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+    } catch (e) {
+      console.warn('Failed to save state:', e);
+    }
+  }, 200);
+}
 
 // refs
 let lastSpokenId = -1;
@@ -652,6 +913,8 @@ function snapshotState() {
     ids: state.ids,
     completedIds: state.completedIds,
     suitcaseRows: state.suitcaseRows,
+    unfurnished: state.unfurnished,
+    unfurnishedDone: state.unfurnishedDone,
     manualIdx: state.manualIdx,
     nextId: state.nextId,
   });
@@ -673,6 +936,8 @@ function undo() {
   state.ids = parsed.ids;
   state.completedIds = parsed.completedIds;
   state.suitcaseRows = parsed.suitcaseRows;
+  if (parsed.unfurnished) state.unfurnished = parsed.unfurnished;
+  if (parsed.unfurnishedDone) state.unfurnishedDone = parsed.unfurnishedDone;
   state.manualIdx = parsed.manualIdx;
   state.nextId = parsed.nextId;
   // Clear any in-progress edits since indices may have shifted
@@ -680,6 +945,7 @@ function undo() {
   state.editingLocationIdx = null;
   state.editingSub = { taskIdx: null, subIdx: null };
   state.editingSuitcaseRow = null;
+  state.editingUnfurnished = null;
   render();
 }
 
@@ -694,11 +960,18 @@ function getOrder() {
 }
 
 function getCurrent() {
-  // If user manually navigated, use that
+  // If user manually navigated AND that task is still uncompleted, use it.
+  // If the manually-selected task got checked off, fall through to the next
+  // uncompleted task so the voice doesn't keep reading a done item.
   if (state.manualIdx !== null && state.manualIdx >= 0 && state.manualIdx < state.tasks.length) {
-    return { id: state.ids[state.manualIdx], idx: state.manualIdx, task: state.tasks[state.manualIdx] };
+    const id = state.ids[state.manualIdx];
+    if (!state.completedIds.includes(id)) {
+      return { id, idx: state.manualIdx, task: state.tasks[state.manualIdx] };
+    }
+    // The manually-chosen task is done now — clear the manual override
+    state.manualIdx = null;
   }
-  // Otherwise: first active (uncompleted) task
+  // First active (uncompleted) task
   const { active } = getOrder();
   if (!active.length) return null;
   const entry = active[0];
@@ -708,35 +981,77 @@ function getCurrent() {
 function goToPrevTask() {
   const cur = getCurrent();
   if (!cur) return;
-  if (cur.idx > 0) {
-    state.manualIdx = cur.idx - 1;
-    state.timeLeft = TASK_DURATION;
-    lastReminderTime = TASK_DURATION;
-    checkSpeakOnTaskChange();
-    render();
+  // Find the previous unchecked task in array order (skip done ones)
+  let target = -1;
+  for (let i = cur.idx - 1; i >= 0; i--) {
+    if (!state.completedIds.includes(state.ids[i])) {
+      target = i;
+      break;
+    }
   }
+  // Fall back to immediate previous even if done, rather than going nowhere
+  if (target === -1 && cur.idx > 0) target = cur.idx - 1;
+  if (target === -1) return;
+  state.manualIdx = target;
+  state.timeLeft = TASK_DURATION;
+  lastReminderTime = TASK_DURATION;
+  checkSpeakOnTaskChange();
+  render();
 }
 
 function goToNextTask() {
   const cur = getCurrent();
   if (!cur) return;
-  if (cur.idx < state.tasks.length - 1) {
-    state.manualIdx = cur.idx + 1;
-    state.timeLeft = TASK_DURATION;
-    lastReminderTime = TASK_DURATION;
-    checkSpeakOnTaskChange();
-    render();
+  pushUndo();
+
+  // Find the boundary between active and crossed-off tasks. We want to move
+  // the current task to just AFTER the last active task (i.e. the position
+  // right before the first crossed-off task), so it lands at the bottom of
+  // the active list but stays above anything checked-off.
+  const curId = cur.id;
+  const curIdx = cur.idx;
+
+  // Remove current task from its current position
+  const [movedTask] = state.tasks.splice(curIdx, 1);
+  const [movedId] = state.ids.splice(curIdx, 1);
+
+  // Find where to re-insert: just after the last non-completed task remaining.
+  // Walk from the end of the array backward until we find an active task,
+  // then insert right after it.
+  let insertAt = state.tasks.length; // default: at the very end
+  for (let i = state.tasks.length - 1; i >= 0; i--) {
+    const id = state.ids[i];
+    if (!state.completedIds.includes(id)) {
+      insertAt = i + 1; // insert right after this active task
+      break;
+    }
+    // If we never find an active task (everything else is done), we want
+    // the skipped task to go BEFORE the crossed-off pile.
+    if (i === 0) insertAt = 0;
   }
+
+  state.tasks.splice(insertAt, 0, movedTask);
+  state.ids.splice(insertAt, 0, movedId);
+
+  // Clear manual navigation so we resume picking the first active task
+  state.manualIdx = null;
+  state.timeLeft = TASK_DURATION;
+  lastReminderTime = TASK_DURATION;
+  checkSpeakOnTaskChange();
+  render();
 }
 
 // ---- Speech ----
 function buildSpeechIntro(task) {
   if (!task) return '';
+  const name = stripTagsFromName(task.name);
+  const loc = (task.location || '').trim();
+  const locSuffix = loc ? ` Located at ${loc}.` : '';
   if (task.type === 'group' && task.items && task.items.length) {
-    const items = task.items.map(it => it.name).join(', ');
-    return `${task.name}. ${items}.`;
+    const items = task.items.map(it => stripTagsFromName(it.name)).join(', ');
+    return `${name}. ${items}.${locSuffix}`;
   }
-  return task.name || '';
+  return `${name || ''}${locSuffix}`;
 }
 
 function makeMotivation(taskName) {
@@ -765,17 +1080,99 @@ function makeMotivation(taskName) {
   return templates[Math.floor(Math.random() * templates.length)];
 }
 
+// ---- Cash register "ka-ching" sound (Web Audio, no external files) ----
+// Layered: a bright metallic bell ding + a soft drawer-slide noise burst.
+let _audioCtx = null;
+function getAudioCtx() {
+  if (!_audioCtx) {
+    try {
+      _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch (e) { return null; }
+  }
+  if (_audioCtx.state === 'suspended') _audioCtx.resume();
+  return _audioCtx;
+}
+
+function playCashSound() {
+  // Honor mute / volume settings so we don't surprise the user
+  if (state.muted) return;
+  const vol = (state.volume !== undefined ? state.volume : 1) * 0.45;
+  if (vol <= 0) return;
+
+  const ctx = getAudioCtx();
+  if (!ctx) return;
+  const now = ctx.currentTime;
+
+  // ---- Bell "ding" — multiple harmonics for a metallic bell timbre ----
+  const playBell = (start, freq, dur, amp) => {
+    // Use sine + overtones to mimic a bell hammer hit
+    const harmonics = [
+      { mult: 1.0, gain: 1.0 },
+      { mult: 2.76, gain: 0.5 },  // characteristic bell partial
+      { mult: 5.4, gain: 0.25 },
+      { mult: 8.2, gain: 0.12 },
+    ];
+    harmonics.forEach(h => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq * h.mult;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(vol * amp * h.gain, start + 0.002);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + dur + 0.02);
+    });
+  };
+
+  // ---- Drawer-pop noise — short filtered noise burst for the "ka" part ----
+  const playPop = (start, dur, amp, filterFreq) => {
+    const bufSize = Math.floor(ctx.sampleRate * dur);
+    const buffer = ctx.createBuffer(1, bufSize, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufSize * 0.3));
+    }
+    const noise = ctx.createBufferSource();
+    noise.buffer = buffer;
+    const filter = ctx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = filterFreq;
+    filter.Q.value = 1.5;
+    const gain = ctx.createGain();
+    gain.gain.value = vol * amp;
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(ctx.destination);
+    noise.start(start);
+    noise.stop(start + dur);
+  };
+
+  // Sequence: "ka" (low drawer thud) → "CHING" (bright bell)
+  playPop(now, 0.08, 0.4, 250);                    // low thud — drawer opening
+  playPop(now + 0.03, 0.12, 0.25, 1800);           // crisp metallic shimmer
+  playBell(now + 0.06, 1760, 0.9, 0.5);            // A6 bell — the "CHING"
+  playBell(now + 0.07, 2349, 0.7, 0.3);            // D7 bell — overtone shimmer
+}
+
 function speak(text) {
-  if (!('speechSynthesis' in window)) return;
-  if (state.muted || state.volume <= 0) return;
+  if (!('speechSynthesis' in window)) {
+    console.warn('No speech synthesis available');
+    return;
+  }
+  if (state.muted) return;
+  if (state.volume <= 0) return;
   try {
     window.speechSynthesis.cancel();
     currentSpeechText = text;
     const u = new SpeechSynthesisUtterance(text);
     u.rate = 0.95; u.pitch = 1.0; u.volume = state.volume;
     u.onend = () => { if (currentSpeechText === text) currentSpeechText = ''; };
+    u.onerror = (ev) => { console.warn('Speech error:', ev); };
     window.speechSynthesis.speak(u);
-  } catch (e) { console.error(e); }
+  } catch (e) { console.error('Speech failed:', e); }
 }
 
 // ---- Actions ----
@@ -790,6 +1187,7 @@ function startTimer() {
       if (cur && !state.completedIds.includes(cur.id)) {
         pushUndo();
         state.completedIds.push(cur.id);
+        playCashSound();
       }
       advanceToNextInList();
       state.timeLeft = TASK_DURATION;
@@ -797,10 +1195,16 @@ function startTimer() {
       checkSpeakOnTaskChange();
     } else {
       const elapsed = TASK_DURATION - state.timeLeft;
-      if (state.isRunning && !state.muted && elapsed > 0 && elapsed % 15 === 0 && lastReminderTime !== state.timeLeft) {
+      // Fire a reminder every ~15 seconds. We track the elapsed-time of the last
+      // reminder and fire whenever 15+ seconds have passed since then, instead of
+      // requiring `elapsed % 15 === 0` exactly (which could be missed if the tab
+      // was backgrounded for a moment).
+      const lastReminderElapsed = TASK_DURATION - lastReminderTime;
+      if (state.isRunning && !state.muted && elapsed >= lastReminderElapsed + 15) {
         lastReminderTime = state.timeLeft;
         const cur = getCurrent();
-        if (cur) {
+        // Don't read out a task that's already crossed off
+        if (cur && !state.completedIds.includes(cur.id)) {
           const m = Math.floor(state.timeLeft / 60), s = state.timeLeft % 60;
           let timeStr;
           if (m > 0 && s > 0) timeStr = `${m} minute${m !== 1 ? 's' : ''} and ${s} second${s !== 1 ? 's' : ''}`;
@@ -808,10 +1212,11 @@ function startTimer() {
           else timeStr = `${s} second${s !== 1 ? 's' : ''}`;
           let extra = '';
           if (cur.task.type === 'group') {
-            const rem = (cur.task.items || []).filter(it => !it.done).map(it => it.name);
+            const rem = (cur.task.items || []).filter(it => !it.done).map(it => stripTagsFromName(it.name));
             if (rem.length) extra = ` Still need: ${rem.join(', ')}.`;
           }
-          speak(`${cur.task.name}. ${timeStr} left.${extra} ${makeMotivation(cur.task.name)}`);
+          const cleanName = stripTagsFromName(cur.task.name);
+          speak(`${cleanName}. ${timeStr} left.${extra} ${makeMotivation(cleanName)}`);
         }
       }
     }
@@ -838,6 +1243,8 @@ function advanceToNextInList() {
 function checkSpeakOnTaskChange() {
   const cur = getCurrent();
   if (!cur) { lastSpokenId = -1; return; }
+  // Safety: if for any reason getCurrent returns a completed task, bail out.
+  if (state.completedIds.includes(cur.id)) { lastSpokenId = cur.id; return; }
   if (state.muted || !state.hasStarted) { lastSpokenId = cur.id; return; }
   if (lastSpokenId === cur.id) return;
   lastSpokenId = cur.id;
@@ -868,7 +1275,10 @@ function handleMarkDone() {
   const cur = getCurrent();
   if (!cur) return;
   pushUndo();
-  if (!state.completedIds.includes(cur.id)) state.completedIds.push(cur.id);
+  if (!state.completedIds.includes(cur.id)) {
+    state.completedIds.push(cur.id);
+    playCashSound();
+  }
   // Move strictly downward (not to "first uncompleted")
   advanceToNextInList();
   state.timeLeft = TASK_DURATION;
@@ -882,9 +1292,12 @@ function toggleTaskDone(id) {
   const cur = getCurrent();
   const wasCurrent = cur && cur.id === id;
   if (state.completedIds.includes(id)) {
+    // Un-checking — no sound
     state.completedIds = state.completedIds.filter(x => x !== id);
   } else {
+    // Checking off — coin chime
     state.completedIds.push(id);
+    playCashSound();
   }
   if (wasCurrent) {
     state.timeLeft = TASK_DURATION;
@@ -925,17 +1338,51 @@ function updateTaskName(idx, name) { state.tasks[idx].name = name; render(); }
 function updateTaskLocation(idx, location) { state.tasks[idx].location = location; render(); }
 function updateSubName(idx, j, name) { state.tasks[idx].items[j].name = name; render(); }
 
+// Scan the main task list for any task tagged #unfurnished. Move each such task
+// into the unfurnished checklist (stripping the #unfurnished tag from its text)
+// and remove it from the main timed list.
+function moveUnfurnishedTaggedToList() {
+  let moved = false;
+  for (let i = state.tasks.length - 1; i >= 0; i--) {
+    const task = state.tasks[i];
+    const tags = extractTags(task.name).map(t => t.toLowerCase());
+    if (tags.includes('unfurnished')) {
+      // Keep the emoji + name, drop only the #unfurnished tag (keep any other tags).
+      const text = task.name.replace(/\s*#unfurnished\b/gi, '').trim();
+      const emoji = task.emoji ? task.emoji + ' ' : '';
+      const finalText = (emoji + text).trim();
+      if (!moved) pushUndo();
+      moved = true;
+      state.unfurnished.push(finalText || '(untitled)');
+      // Remove from main tasks
+      const removedId = state.ids[i];
+      state.tasks.splice(i, 1);
+      state.ids.splice(i, 1);
+      state.completedIds = state.completedIds.filter(x => x !== removedId);
+      if (state.manualIdx !== null) {
+        if (state.manualIdx === i) state.manualIdx = null;
+        else if (state.manualIdx > i) state.manualIdx -= 1;
+      }
+    }
+  }
+  return moved;
+}
+
 function toggleSub(idx, j) {
   pushUndo();
   const task = state.tasks[idx];
   if (!task || task.type !== 'group') return;
+  const wasChecked = task.items[j].done;
   task.items[j].done = !task.items[j].done;
+  // Coin sound when checking off, no sound when un-checking
+  if (!wasChecked) playCashSound();
   // If this is the current task and ALL sub-items are now done, auto-complete the group
   const cur = getCurrent();
   if (cur && cur.idx === idx && task.items.length > 0 && task.items.every(it => it.done)) {
     setTimeout(() => {
       if (!state.completedIds.includes(state.ids[idx])) {
         state.completedIds.push(state.ids[idx]);
+        playCashSound(); // group completion gets its own cash sound too
         state.timeLeft = TASK_DURATION;
         lastReminderTime = TASK_DURATION;
         checkSpeakOnTaskChange();
@@ -950,7 +1397,7 @@ function addSubItem(idx) {
   const task = state.tasks[idx];
   if (!task || task.type !== 'group') return;
   pushUndo();
-  task.items.push({ emoji: pickEmoji(""), name: "", done: false });
+  task.items.push({ emoji: "", name: "", done: false });
   state.editingSub = { taskIdx: idx, subIdx: task.items.length - 1 };
   render();
 }
@@ -964,29 +1411,49 @@ function removeSubItem(idx, j) {
 function addTask() {
   pushUndo();
   const newId = state.nextId++;
-  state.tasks.push({ type: 'item', emoji: pickEmoji(""), name: "", location: "" });
-  state.ids.push(newId);
-  state.editingNameIdx = state.tasks.length - 1;
+  // Insert at top of list — no auto emoji, user can type one if they want
+  state.tasks.unshift({ type: 'item', emoji: "", name: "", location: "" });
+  state.ids.unshift(newId);
+  // Existing indices shift down by 1
+  if (state.manualIdx !== null) state.manualIdx += 1;
+  state.editingNameIdx = 0;
   render();
-  // Scroll the new task into view so the user sees it
+  // Scroll to top so the new task is visible
   setTimeout(() => {
-    const el = document.querySelector(`.task-item[data-idx="${state.tasks.length - 1}"]`);
+    const el = document.querySelector(`.task-item[data-idx="0"]`);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, 0);
 }
 
-function quickAddTask(name) {
+function quickAddTask(name, location) {
   const trimmed = (name || '').trim();
   if (!trimmed) return;
+  const loc = (location || '').trim();
   pushUndo();
+  // If the typed task is tagged #unfurnished, put it straight in the unfurnished list.
+  if (extractTags(trimmed).map(t => t.toLowerCase()).includes('unfurnished')) {
+    const text = trimmed.replace(/\s*#unfurnished\b/gi, '').trim();
+    state.unfurnished.push(text || '(untitled)');
+    render();
+    setTimeout(() => {
+      const qa = document.getElementById('quick-add');
+      if (qa) qa.focus();
+    }, 0);
+    return;
+  }
   const newId = state.nextId++;
-  state.tasks.push({ type: 'item', emoji: pickEmoji(trimmed), name: trimmed, location: "" });
-  state.ids.push(newId);
+  // If user typed a leading emoji, use it; otherwise leave it empty.
+  const split = splitLeadingEmoji(trimmed);
+  const emoji = split.emoji; // may be ''
+  const taskName = split.emoji ? split.rest : trimmed;
+  // Insert at top of list
+  state.tasks.unshift({ type: 'item', emoji, name: taskName, location: loc });
+  state.ids.unshift(newId);
+  if (state.manualIdx !== null) state.manualIdx += 1;
   render();
-  // Scroll the new task into view so the user knows where it went,
-  // then re-focus the quick-add input.
+  // Scroll to the new task and re-focus the quick-add input
   setTimeout(() => {
-    const el = document.querySelector(`.task-item[data-idx="${state.tasks.length - 1}"]`);
+    const el = document.querySelector(`.task-item[data-idx="0"]`);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     const qa = document.getElementById('quick-add');
     if (qa) qa.focus();
@@ -1207,6 +1674,57 @@ function joinEmojiName(emoji, name) {
   return e || n || '';
 }
 
+// ---- Tag extraction (#sleep, #urgent, etc.) ----
+// Tags are written in the task name as `#word`. We extract them for display
+// as colored pills, but keep them in the name text so the user edits them
+// naturally just by typing.
+function extractTags(name) {
+  const tags = [];
+  const re = /#([\p{L}\p{N}_-]+)/gu;
+  let m;
+  while ((m = re.exec(name || '')) !== null) {
+    tags.push(m[1]);
+  }
+  return tags;
+}
+
+// Strip tags from name for the *displayed* text portion (so "Wash face #morning"
+// shows the name without the inline #morning, and #morning shows as a pill).
+function stripTagsFromName(name) {
+  return (name || '').replace(/\s*#[\p{L}\p{N}_-]+/gu, '').trim();
+}
+
+// Hash-based color assignment so the same tag always gets the same color.
+// Uses a curated palette that contrasts with the dark background.
+const TAG_COLORS = [
+  { bg: 'rgba(120, 158, 220, 0.18)', border: 'rgba(120, 158, 220, 0.5)', fg: '#9fb8e0' }, // blue
+  { bg: 'rgba(180, 130, 200, 0.18)', border: 'rgba(180, 130, 200, 0.5)', fg: '#c9a0d8' }, // purple
+  { bg: 'rgba(130, 190, 150, 0.18)', border: 'rgba(130, 190, 150, 0.5)', fg: '#a8d4b3' }, // green
+  { bg: 'rgba(220, 160, 110, 0.18)', border: 'rgba(220, 160, 110, 0.5)', fg: '#e0b585' }, // orange
+  { bg: 'rgba(220, 122, 108, 0.18)', border: 'rgba(220, 122, 108, 0.5)', fg: '#e8978a' }, // red
+  { bg: 'rgba(140, 200, 200, 0.18)', border: 'rgba(140, 200, 200, 0.5)', fg: '#a4d8d8' }, // teal
+  { bg: 'rgba(220, 200, 110, 0.18)', border: 'rgba(220, 200, 110, 0.5)', fg: '#dcc878' }, // yellow
+  { bg: 'rgba(200, 145, 180, 0.18)', border: 'rgba(200, 145, 180, 0.5)', fg: '#d4a5c0' }, // pink
+];
+function tagColor(tag) {
+  // Simple string hash → palette index
+  let h = 0;
+  for (let i = 0; i < tag.length; i++) {
+    h = ((h << 5) - h) + tag.charCodeAt(i);
+    h |= 0;
+  }
+  return TAG_COLORS[Math.abs(h) % TAG_COLORS.length];
+}
+
+function renderTagPills(tags, idx) {
+  if (!tags || !tags.length) return '';
+  const dataAttr = (idx !== undefined && idx !== null) ? ` data-action="start-edit-name" data-idx="${idx}"` : '';
+  return tags.map(t => {
+    const c = tagColor(t.toLowerCase());
+    return `<span class="task-tag" style="background:${c.bg};border-color:${c.border};color:${c.fg}"${dataAttr} title="Edit task to change tag">#${escapeHtml(t)}</span>`;
+  }).join('');
+}
+
 function renderTaskRow(task, idx, isCurrent, isDone) {
   const isEditingName = state.editingNameIdx === idx;
   const isEditingLoc = state.editingLocationIdx === idx;
@@ -1216,7 +1734,7 @@ function renderTaskRow(task, idx, isCurrent, isDone) {
   html += `<div class="task-main-row">`;
 
   // Check circle
-  html += `<div class="check-circle ${isDone ? 'done' : isCurrent ? 'current' : ''}" data-action="toggle-task" data-idx="${idx}" title="Toggle done">`;
+  html += `<div class="check-circle ${isDone ? 'done' : isCurrent ? 'current' : ''}" data-action="toggle-task" data-idx="${idx}" title="${isDone ? 'Click to uncheck' : 'Mark done'}">`;
   if (isDone) html += `<svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="#1a1f2e" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
   html += `</div>`;
 
@@ -1234,31 +1752,45 @@ function renderTaskRow(task, idx, isCurrent, isDone) {
   html += `<div class="task-body">`;
   html += `<div class="task-row">`;
 
-  // Task name + emoji rendered together as one editable unit
-  const taskEmoji = task.emoji || pickEmoji(task.name);
+  // Task name + emoji rendered together as one editable unit.
+  // Note: `task.emoji === ''` means user explicitly deleted the emoji — respect that.
+  // Only fall back to auto-pick if `emoji` is undefined (never been set).
+  const taskEmoji = task.emoji !== undefined ? task.emoji : '';
   if (isEditingName) {
-    // Emoji is part of the input value so the user can edit/delete/replace it
+    // Emoji is part of the input value so the user can edit/delete/replace it.
+    // Tags (#word) stay in the editable text so the user can edit them naturally.
     const editValue = joinEmojiName(taskEmoji, task.name);
     html += `<input autofocus class="task-name-input ${isGroup ? 'group' : ''}" data-action="edit-name" data-idx="${idx}" value="${escapeHtml(editValue)}" />`;
   } else {
     const struck = isDone ? 'struck' : '';
     const empty = !task.name ? 'empty' : '';
-    const nameDisplay = task.name ? escapeHtml(task.name) + (isGroup ? ':' : '') : 'untitled';
-    // Render emoji inline as part of the same clickable text element
-    html += `<span class="task-name-text ${isGroup ? 'group' : ''} ${struck} ${empty}" data-action="start-edit-name" data-idx="${idx}" title="Click to edit">${taskEmoji} ${nameDisplay}</span>`;
+    const visibleName = stripTagsFromName(task.name);
+    const nameDisplay = visibleName ? escapeHtml(visibleName) + (isGroup ? ':' : '') : (task.name ? '' : 'untitled');
+    // Render emoji inline as part of the same clickable text element.
+    // Skip the leading space if emoji is empty (user deleted it).
+    const prefix = taskEmoji ? `${taskEmoji} ` : '';
+    html += `<span class="task-name-text ${isGroup ? 'group' : ''} ${struck} ${empty}" data-action="start-edit-name" data-idx="${idx}" title="Click to edit">${prefix}${nameDisplay}</span>`;
   }
 
-  // Inline location — part of the text, no pin emoji
+  html += `</div>`; // task-row
+  html += `</div>`; // task-body
+
+  // Right-side slot: tags + location, always pinned right, never wraps under the name.
+  const tags = extractTags(task.name);
+  html += `<div class="task-location-slot">`;
+  // Tag pills first (to the left of location, still on the right side of the row)
+  if (!isEditingName && tags.length) {
+    html += renderTagPills(tags, idx);
+  }
   if (isEditingLoc) {
     html += `<input autofocus class="location-input" data-action="edit-location" data-idx="${idx}" value="${escapeHtml(task.location)}" placeholder="location" />`;
   } else if (task.location) {
-    html += `<span class="location-inline" data-action="toggle-location-edit" data-idx="${idx}" title="Click to edit location">— ${escapeHtml(task.location)}</span>`;
-  } else {
+    html += `<span class="location-inline" data-action="toggle-location-edit" data-idx="${idx}" title="Click to edit location">${escapeHtml(task.location)}</span>`;
+  } else if (!isEditingName) {
+    // Only show "+ location" placeholder when NOT editing the name (so it doesn't crowd the input)
     html += `<span class="location-add" data-action="toggle-location-edit" data-idx="${idx}" title="Add location">+ location</span>`;
   }
-
-  html += `</div>`;
-  html += `</div>`; // task-body
+  html += `</div>`; // task-location-slot
 
   html += `<button class="remove-btn" data-action="remove-task" data-idx="${idx}" title="Remove task"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
 
@@ -1268,9 +1800,9 @@ function renderTaskRow(task, idx, isCurrent, isDone) {
     html += `<div class="sub-items-wrap">`;
     task.items.forEach((sub, j) => {
       const isEditingThis = state.editingSub.taskIdx === idx && state.editingSub.subIdx === j;
-      const subEmoji = sub.emoji || pickEmoji(sub.name);
+      const subEmoji = sub.emoji !== undefined ? sub.emoji : '';
       html += `<div class="sub-row">`;
-      html += `<div class="check-small ${sub.done ? 'done' : ''}" data-action="toggle-sub" data-idx="${idx}" data-sub="${j}" title="Toggle done">`;
+      html += `<div class="check-small ${sub.done ? 'done' : ''}" data-action="toggle-sub" data-idx="${idx}" data-sub="${j}" title="${sub.done ? 'Click to uncheck' : 'Mark done'}">`;
       if (sub.done) html += `<svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="#0a0d14" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
       html += `</div>`;
       if (isEditingThis) {
@@ -1278,8 +1810,20 @@ function renderTaskRow(task, idx, isCurrent, isDone) {
         html += `<input autofocus class="sub-item-input" data-action="edit-sub" data-idx="${idx}" data-sub="${j}" value="${escapeHtml(editValue)}" />`;
       } else {
         const struck = sub.done ? 'struck' : '';
-        const display = sub.name ? `${subEmoji} ${escapeHtml(sub.name)}` : `${subEmoji} <span style="opacity:0.4;font-style:italic">untitled</span>`;
-        html += `<span class="sub-item-text ${struck}" data-action="start-edit-sub" data-idx="${idx}" data-sub="${j}" title="Click to edit">${display}</span>`;
+        const prefix = subEmoji ? `${subEmoji} ` : '';
+        const subTags = extractTags(sub.name);
+        const visibleSubName = stripTagsFromName(sub.name);
+        const nameOrUntitled = visibleSubName
+          ? escapeHtml(visibleSubName)
+          : (sub.name ? '' : '<span style="opacity:0.4;font-style:italic">untitled</span>');
+        html += `<span class="sub-item-text ${struck}" data-action="start-edit-sub" data-idx="${idx}" data-sub="${j}" title="Click to edit">${prefix}${nameOrUntitled}</span>`;
+        // Tag pills next to sub-item name
+        if (subTags.length) {
+          html += subTags.map(t => {
+            const c = tagColor(t.toLowerCase());
+            return `<span class="task-tag" style="background:${c.bg};border-color:${c.border};color:${c.fg}" data-action="start-edit-sub" data-idx="${idx}" data-sub="${j}" title="Edit to change tag">#${escapeHtml(t)}</span>`;
+          }).join('');
+        }
       }
       html += `<button class="remove-btn" data-action="remove-sub" data-idx="${idx}" data-sub="${j}" title="Remove"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
       html += `</div>`;
@@ -1290,6 +1834,58 @@ function renderTaskRow(task, idx, isCurrent, isDone) {
 
   html += `</div>`;
   return html;
+}
+
+// Second checklist — items needed if the place were unfurnished.
+function renderUnfurnished() {
+  let itemsHtml = '';
+  state.unfurnished.forEach((item, i) => {
+    const isEditing = state.editingUnfurnished === i;
+    const isDone = state.unfurnishedDone.includes(i);
+    itemsHtml += `<div class="uf-row ${isDone ? 'uf-done' : ''}">`;
+    // Checkbox
+    itemsHtml += `<div class="uf-check ${isDone ? 'done' : ''}" data-action="toggle-unfurnished" data-uf="${i}" title="${isDone ? 'Click to uncheck' : 'Mark done'}">`;
+    if (isDone) itemsHtml += `<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#0a0d14" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+    itemsHtml += `</div>`;
+    // Name (editable)
+    if (isEditing) {
+      itemsHtml += `<input autofocus class="uf-input" data-action="edit-unfurnished" data-uf="${i}" value="${escapeHtml(item)}" placeholder="item" />`;
+    } else {
+      const display = item ? escapeHtml(item) : '<em style="opacity:0.4">untitled</em>';
+      itemsHtml += `<span class="uf-name ${isDone ? 'struck' : ''}" data-action="start-edit-unfurnished" data-uf="${i}" title="Click to edit">${display}</span>`;
+    }
+    // Remove
+    itemsHtml += `<button class="uf-remove" data-action="remove-unfurnished" data-uf="${i}" title="Remove">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>`;
+    itemsHtml += `</div>`;
+  });
+
+  return `
+    <div class="unfurnished-gap"></div>
+    <div class="unfurnished-section">
+      <div class="unfurnished-header">
+        <div class="unfurnished-title">UNFURNISHED LIST</div>
+        <button class="add-btn" data-action="add-unfurnished">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          ADD
+        </button>
+      </div>
+      <div class="unfurnished-subtitle">Additional things I need if the place was unfurnished</div>
+      <div class="quick-add-wrap">
+        <div class="quick-add-plus">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <input type="text" class="quick-add-input" id="unfurnished-quick-add"
+          placeholder="Type an item and press Enter…"
+          autocomplete="off"
+        />
+      </div>
+      <div class="unfurnished-body">
+        ${itemsHtml || '<div class="uf-empty">Nothing here yet — add items above.</div>'}
+      </div>
+    </div>
+  `;
 }
 
 function renderSuitcase() {
@@ -1354,13 +1950,65 @@ function renderSuitcase() {
   `;
 }
 
+// Update only the timer display (time text + ring progress) without rebuilding
+// the rest of the DOM. Used during text editing so inputs aren't disturbed.
+function updateLiveTimerDisplay() {
+  const m = Math.floor(state.timeLeft / 60);
+  const s = state.timeLeft % 60;
+  const timeStr = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  const timeEl = document.querySelector('.center-time');
+  if (timeEl) {
+    timeEl.textContent = timeStr;
+    if (state.timeLeft < 30) timeEl.classList.add('warn');
+    else timeEl.classList.remove('warn');
+  }
+  // Update ring progress
+  const radius = 130;
+  const circumference = 2 * Math.PI * radius;
+  const cur = getCurrent();
+  const isAllDone = !cur;
+  const progress = isAllDone ? 1 : 1 - state.timeLeft / TASK_DURATION;
+  const ring = document.querySelector('.ring circle:last-of-type');
+  if (ring) {
+    ring.setAttribute('stroke-dashoffset', String(circumference * progress));
+  }
+}
+
 function render() {
+  // Persist current state so changes survive reloads / future code updates.
+  savePersistedState();
+
+  // If the user is actively typing in a task/sub/location/suitcase input,
+  // skip the full re-render so their in-progress text is NEVER overwritten.
+  // We still update the live timer display so the countdown stays visible.
+  const ae = document.activeElement;
+  if (ae && ae.tagName === 'INPUT' && ae.dataset && ae.dataset.action) {
+    const protectedActions = [
+      'edit-name', 'edit-sub', 'edit-location',
+      'edit-sc-row-name', 'edit-sc-item', 'edit-unfurnished',
+    ];
+    if (protectedActions.includes(ae.dataset.action)) {
+      updateLiveTimerDisplay(); // update time only, leave inputs alone
+      return;
+    }
+  }
+
   // Preserve quick-add input value & focus across re-renders
   const qaPrev = document.getElementById('quick-add');
   const qaValue = qaPrev ? qaPrev.value : '';
   const qaHadFocus = qaPrev && document.activeElement === qaPrev;
   const qaSelStart = qaHadFocus ? qaPrev.selectionStart : null;
   const qaSelEnd = qaHadFocus ? qaPrev.selectionEnd : null;
+
+  // Quick-add location field
+  const qlPrev = document.getElementById('quick-add-location');
+  const qlValue = qlPrev ? qlPrev.value : '';
+  const qlHadFocus = qlPrev && document.activeElement === qlPrev;
+
+  // Same for the unfurnished quick-add input
+  const ufPrev = document.getElementById('unfurnished-quick-add');
+  const ufValue = ufPrev ? ufPrev.value : '';
+  const ufHadFocus = ufPrev && document.activeElement === ufPrev;
 
   const { active, done } = getOrder();
   const cur = getCurrent();
@@ -1394,24 +2042,36 @@ function render() {
     if (hasItems) {
       subListHtml = `<div class="center-sub-list">` +
         cur.task.items.map((it, j) => {
-          const e = it.emoji || pickEmoji(it.name);
+          const e = it.emoji !== undefined ? it.emoji : '';
+          const itTags = extractTags(it.name);
+          const itName = stripTagsFromName(it.name);
+          const pills = itTags.length
+            ? itTags.map(t => {
+                const c = tagColor(t.toLowerCase());
+                return `<span class="task-tag" style="background:${c.bg};border-color:${c.border};color:${c.fg}">#${escapeHtml(t)}</span>`;
+              }).join('')
+            : '';
           return `
             <div class="center-sub ${it.done ? 'done' : ''}" data-action="toggle-sub" data-idx="${cur.idx}" data-sub="${j}">
               <div class="check-small ${it.done ? 'done' : ''}" style="width:11px;height:11px">
                 ${it.done ? '<svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#0a0d14" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : ''}
               </div>
-              <span class="center-sub-emoji">${e}</span>
-              ${escapeHtml(it.name)}
+              ${e ? `<span class="center-sub-emoji">${e}</span>` : ''}
+              ${escapeHtml(itName)}
+              ${pills}
             </div>
           `;
         }).join('') +
         `</div>`;
     }
-    const centerEmoji = cur.task.emoji || pickEmoji(cur.task.name);
+    const centerEmoji = cur.task.emoji !== undefined ? cur.task.emoji : '';
+    const centerTags = extractTags(cur.task.name);
+    const centerName = stripTagsFromName(cur.task.name);
+    const centerTagsInline = centerTags.length ? ` ${renderTagPills(centerTags)}` : '';
     centerHtml = `
-      <div class="center-emoji">${centerEmoji}</div>
-      <div class="center-task-name ${isGroup ? 'group' : ''}">${escapeHtml(cur.task.name)}${isGroup ? ':' : ''}</div>
-      ${cur.task.location ? `<div class="center-location">${escapeHtml(cur.task.location)}</div>` : ''}
+      ${centerEmoji ? `<div class="center-emoji">${centerEmoji}</div>` : ''}
+      <div class="center-task-name ${isGroup ? 'group' : ''}">${escapeHtml(centerName)}${isGroup ? ':' : ''}${centerTagsInline}</div>
+      ${cur.task.location ? `<div class="center-location">📍 ${escapeHtml(cur.task.location)}</div>` : ''}
       ${subListHtml}
       <div class="center-time ${state.timeLeft < 30 ? 'warn' : ''} ${hasItems ? 'small' : ''}">${timeStr}</div>
     `;
@@ -1460,14 +2120,50 @@ function render() {
           placeholder="Type a new task and press Enter…"
           autocomplete="off"
         />
+        <input type="text" class="quick-add-location" id="quick-add-location"
+          placeholder="📍 location"
+          autocomplete="off"
+        />
       </div>
   `;
-  // Render all tasks in their natural order — done ones stay in place, just faded.
+  // Sort key for checked-off tasks based on location:
+  // Shelf 1 → 6 first, then other named locations alphabetically, then no-location last.
+  function doneSortKey(task) {
+    const loc = (task.location || '').trim();
+    if (!loc) return [2, '', ''];
+    const shelfMatch = loc.match(/shelf\s*(\d+)/i);
+    if (shelfMatch) {
+      return [0, parseInt(shelfMatch[1], 10), loc.toLowerCase()];
+    }
+    return [1, 0, loc.toLowerCase()];
+  }
+  function cmpKey(a, b) {
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] < b[i]) return -1;
+      if (a[i] > b[i]) return 1;
+    }
+    return 0;
+  }
+
+  // Separate active (unchecked) from done. Active tasks keep their natural order
+  // so the user's drag-ordering & current-task logic is preserved.
+  const activeEntries = [];
+  const doneEntries = [];
   state.tasks.forEach((task, i) => {
     const id = state.ids[i];
     const isDone = state.completedIds.includes(id);
-    const isCurrent = cur && cur.idx === i;
-    listHtml += renderTaskRow(task, i, isCurrent, isDone);
+    (isDone ? doneEntries : activeEntries).push({ task, idx: i, id, key: doneSortKey(task) });
+  });
+  // Sort done tasks by location grouping
+  doneEntries.sort((a, b) => cmpKey(a.key, b.key));
+
+  // Render active first, then done (faded, at bottom, grouped by location)
+  activeEntries.forEach(({ task, idx }) => {
+    const isCurrent = cur && cur.idx === idx;
+    listHtml += renderTaskRow(task, idx, isCurrent, false);
+  });
+  doneEntries.forEach(({ task, idx }) => {
+    listHtml += renderTaskRow(task, idx, false, true);
   });
   listHtml += `</div>`;
 
@@ -1488,15 +2184,15 @@ function render() {
         </svg>
         <div class="circle-center">${centerHtml}</div>
       </div>
-      <button class="nav-arrow" data-action="next-task" ${!canNext ? 'aria-disabled="true"' : ''} title="Next task (→)">
+      <button class="nav-arrow" data-action="next-task" ${!canNext ? 'aria-disabled="true"' : ''} title="Skip (send to bottom) (→)">
         <svg width="20" height="20" aria-hidden="true"><use href="#i-chev-right"/></svg>
       </button>
     </div>
     <div class="kbd-hint"><span class="kbd">←</span> <span class="kbd">→</span> NAV &nbsp;·&nbsp; <span class="kbd">SPACE</span> START / PAUSE &nbsp;·&nbsp; <span class="kbd">↵</span> MARK DONE &nbsp;·&nbsp; <span class="kbd">⌘Z</span> UNDO</div>
     <div class="controls">${controlsHtml}</div>
     ${listHtml}
-    ${renderSuitcase()}
-    <div class="footer-hint">TAP ANY TEXT TO EDIT &nbsp;·&nbsp; DRAG ROWS TO REORDER</div>
+    ${renderUnfurnished()}
+    <div class="footer-hint">TAP ANY TEXT TO EDIT &nbsp;·&nbsp; DRAG ROWS TO REORDER &nbsp;·&nbsp; <span class="reset-link" data-action="reset-all">RESET TO DEFAULTS</span></div>
   `;
 
   // Focus inputs that just appeared
@@ -1531,6 +2227,18 @@ function render() {
       qa.focus();
       try { qa.setSelectionRange(qaSelStart, qaSelEnd); } catch {}
     }
+  }
+
+  const ql = document.getElementById('quick-add-location');
+  if (ql) {
+    ql.value = qlValue;
+    if (qlHadFocus) ql.focus();
+  }
+
+  const uf = document.getElementById('unfurnished-quick-add');
+  if (uf) {
+    uf.value = ufValue;
+    if (ufHadFocus) uf.focus();
   }
 
   // Initialize volume slider visual fill
@@ -1589,6 +2297,12 @@ document.addEventListener('click', (e) => {
     case 'play-from':
       playFromTask(idx);
       break;
+    case 'reset-all':
+      if (confirm('Wipe ALL saved tasks, locations, and suitcase items? This will restore the default starter list. This cannot be undone with ⌘Z.')) {
+        try { localStorage.removeItem(STORAGE_KEY); } catch {}
+        location.reload();
+      }
+      break;
     case 'add-sc-row': addSuitcaseRow(); break;
     case 'remove-sc-row':
       e.stopPropagation();
@@ -1610,6 +2324,43 @@ document.addEventListener('click', (e) => {
         rowIdx: parseInt(target.dataset.row, 10),
         itemIdx: parseInt(target.dataset.item, 10),
       };
+      render();
+      break;
+    // ---- Unfurnished list ----
+    case 'add-unfurnished':
+      pushUndo();
+      state.unfurnished.push('');
+      state.editingUnfurnished = state.unfurnished.length - 1;
+      render();
+      break;
+    case 'remove-unfurnished': {
+      e.stopPropagation();
+      pushUndo();
+      const ui = parseInt(target.dataset.uf, 10);
+      state.unfurnished.splice(ui, 1);
+      // Re-index completion set: drop removed, shift higher ones down
+      state.unfurnishedDone = state.unfurnishedDone
+        .filter(x => x !== ui)
+        .map(x => (x > ui ? x - 1 : x));
+      state.editingUnfurnished = null;
+      render();
+      break;
+    }
+    case 'toggle-unfurnished': {
+      pushUndo();
+      const ui = parseInt(target.dataset.uf, 10);
+      if (state.unfurnishedDone.includes(ui)) {
+        state.unfurnishedDone = state.unfurnishedDone.filter(x => x !== ui);
+      } else {
+        state.unfurnishedDone.push(ui);
+        playCashSound();
+      }
+      render();
+      break;
+    }
+    case 'start-edit-unfurnished':
+      pushUndo();
+      state.editingUnfurnished = parseInt(target.dataset.uf, 10);
       render();
       break;
   }
@@ -1668,25 +2419,17 @@ document.addEventListener('input', (e) => {
   const val = target.value;
 
   if (target.dataset.action === 'edit-name') {
-    // Split leading emoji (if any) from the typed text
+    // Split leading emoji (if any) from the typed text.
+    // If the user removed the emoji entirely, clear it — don't preserve the old one.
     const split = splitLeadingEmoji(val);
-    if (split.emoji) {
-      state.tasks[idx].emoji = split.emoji;
-      state.tasks[idx].name = split.rest;
-    } else {
-      // No leading emoji typed — keep existing emoji, name is the raw text
-      state.tasks[idx].name = val;
-    }
+    state.tasks[idx].emoji = split.emoji; // may be '' — that's allowed
+    state.tasks[idx].name = split.emoji ? split.rest : val;
   } else if (target.dataset.action === 'edit-location') {
     state.tasks[idx].location = val;
   } else if (target.dataset.action === 'edit-sub') {
     const split = splitLeadingEmoji(val);
-    if (split.emoji) {
-      state.tasks[idx].items[sub].emoji = split.emoji;
-      state.tasks[idx].items[sub].name = split.rest;
-    } else {
-      state.tasks[idx].items[sub].name = val;
-    }
+    state.tasks[idx].items[sub].emoji = split.emoji;
+    state.tasks[idx].items[sub].name = split.emoji ? split.rest : val;
   } else if (target.dataset.action === 'edit-sc-row-name') {
     const ri = parseInt(target.dataset.row, 10);
     state.suitcaseRows[ri].name = val;
@@ -1694,37 +2437,36 @@ document.addEventListener('input', (e) => {
     const ri = parseInt(target.dataset.row, 10);
     const ii = parseInt(target.dataset.item, 10);
     state.suitcaseRows[ri].items[ii] = val;
+  } else if (target.dataset.action === 'edit-unfurnished') {
+    const ui = parseInt(target.dataset.uf, 10);
+    state.unfurnished[ui] = val;
   }
-  // Don't re-render on every keystroke — preserves focus/cursor
+  // Don't re-render on every keystroke — preserves focus/cursor.
+  // But DO save so the typed text isn't lost on reload.
+  savePersistedState();
 });
 
 document.addEventListener('blur', (e) => {
   const target = e.target;
   if (!target.dataset || !target.dataset.action) return;
   if (target.dataset.action === 'edit-name') {
+    // If the user tagged this task #unfurnished, move it into the unfurnished list.
     const idx = parseInt(target.dataset.idx, 10);
-    const t = state.tasks[idx];
-    if (t) {
-      // If user wiped the emoji from the text, auto-pick one based on the name
-      if (!t.emoji) t.emoji = pickEmoji(t.name);
-      // If user wiped the name but kept emoji, just keep what they have
-    }
     state.editingNameIdx = null;
+    moveUnfurnishedTaggedToList();
     render();
   } else if (target.dataset.action === 'edit-location') {
     state.editingLocationIdx = null;
     render();
   } else if (target.dataset.action === 'edit-sub') {
-    const idx = parseInt(target.dataset.idx, 10);
-    const sub = parseInt(target.dataset.sub, 10);
-    const it = state.tasks[idx] && state.tasks[idx].items && state.tasks[idx].items[sub];
-    if (it) {
-      if (!it.emoji) it.emoji = pickEmoji(it.name);
-    }
+    // No auto-pick on blur for sub-items either.
     state.editingSub = { taskIdx: null, subIdx: null };
     render();
   } else if (target.dataset.action === 'edit-sc-row-name' || target.dataset.action === 'edit-sc-item') {
     state.editingSuitcaseRow = null;
+    render();
+  } else if (target.dataset.action === 'edit-unfurnished') {
+    state.editingUnfurnished = null;
     render();
   }
 }, true);
@@ -1782,11 +2524,28 @@ document.addEventListener('keydown', (e) => {
 // Quick-add input — submit on Enter
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Enter') return;
-  if (e.target && e.target.id === 'quick-add') {
+  if (e.target && (e.target.id === 'quick-add' || e.target.id === 'quick-add-location')) {
     e.preventDefault();
-    const val = e.target.value;
+    const nameEl = document.getElementById('quick-add');
+    const locEl = document.getElementById('quick-add-location');
+    const val = nameEl ? nameEl.value : '';
+    const loc = locEl ? locEl.value : '';
+    if (nameEl) nameEl.value = '';
+    if (locEl) locEl.value = '';
+    quickAddTask(val, loc);
+  } else if (e.target && e.target.id === 'unfurnished-quick-add') {
+    e.preventDefault();
+    const val = (e.target.value || '').trim();
     e.target.value = '';
-    quickAddTask(val);
+    if (val) {
+      pushUndo();
+      state.unfurnished.push(val);
+      render();
+      setTimeout(() => {
+        const el = document.getElementById('unfurnished-quick-add');
+        if (el) el.focus();
+      }, 0);
+    }
   }
 });
 
