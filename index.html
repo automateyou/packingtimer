@@ -141,6 +141,65 @@
     display: flex; justify-content: space-between; align-items: center;
     margin-bottom: 8px; padding: 0 4px;
   }
+
+  .quick-add-wrap {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 12px;
+    border: 1.5px dashed rgba(212, 165, 116, 0.35);
+    background: rgba(212, 165, 116, 0.04);
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+  }
+  .quick-add-wrap:focus-within {
+    border-color: rgba(212, 165, 116, 0.7);
+    background: rgba(212, 165, 116, 0.08);
+    border-style: solid;
+  }
+  .quick-add-plus {
+    color: rgba(212, 165, 116, 0.7);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .quick-add-input {
+    flex: 1;
+    background: transparent; border: none; outline: none;
+    color: var(--fg);
+    font-family: var(--sf-display); font-size: 15px;
+    font-weight: 500; letter-spacing: -0.01em;
+    padding: 2px 0;
+  }
+  .quick-add-input::placeholder {
+    color: rgba(232,228,216,0.35); font-style: italic; font-weight: 400;
+  }
+
+  /* Drag-and-drop */
+  .task-item.dragging {
+    opacity: 0.4; cursor: grabbing;
+    transform: scale(0.98);
+  }
+  .task-item.drag-over-top {
+    box-shadow: 0 -2px 0 var(--accent);
+  }
+  .task-item.drag-over-bottom {
+    box-shadow: 0 2px 0 var(--accent);
+  }
+  .drag-handle {
+    color: rgba(232,228,216,0.25); cursor: grab;
+    padding: 4px 2px; display: flex; align-items: center;
+    flex-shrink: 0; transition: color 0.2s ease;
+    margin-top: 2px;
+  }
+  .drag-handle:hover { color: rgba(232,228,216,0.7); }
+  .drag-handle:active { cursor: grabbing; }
+
+  /* Don't let inputs trigger drag */
+  .task-item input, .task-item .check-circle, .task-item .pin-add,
+  .task-item .pin-location-combo, .task-item .remove-btn,
+  .task-item .task-name-text, .task-item .sub-item-text,
+  .task-item .sub-add, .task-item .check-small {
+    cursor: pointer;
+  }
+  .task-item input { cursor: text; }
   .list-label { font-family: var(--sf-mono); font-size: 10px; letter-spacing: 0.3em; opacity: 0.4; }
   .add-btn {
     background: transparent; border: 1px solid rgba(232,228,216,0.15);
@@ -292,6 +351,96 @@
   .suitcase-section { width: 100%; max-width: 460px; margin-top: 28px; }
   .suitcase-svg { width: 100%; height: auto; display: block; }
 
+  .suitcase-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px; padding: 0 4px;
+  }
+  .suitcase-title {
+    font-family: var(--sf-mono); font-size: 10px;
+    letter-spacing: 0.3em; color: #c8504a; font-weight: 600;
+  }
+  .suitcase-body {
+    border: 1.5px solid rgba(162, 58, 58, 0.5);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(162,58,58,0.08) 0%, rgba(122,40,40,0.04) 100%);
+    padding: 8px;
+    box-shadow: inset 0 0 0 1px rgba(162,58,58,0.15), 0 0 40px rgba(162,58,58,0.05);
+  }
+  .sc-row {
+    border-top: 1px dashed rgba(232,228,216,0.12);
+    padding: 10px 4px;
+  }
+  .sc-row:first-child { border-top: none; }
+
+  .sc-row-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 6px;
+  }
+  .sc-row-name {
+    font-family: var(--sf-mono); font-size: 10px;
+    letter-spacing: 0.2em; color: #d4a574;
+    font-weight: 600; cursor: pointer;
+    padding: 2px 6px; margin-left: -6px;
+    border-radius: 4px; transition: background 0.2s ease;
+    text-transform: uppercase;
+  }
+  .sc-row-name:hover { background: rgba(212,165,116,0.1); }
+  .sc-row-name-input {
+    font-family: var(--sf-mono); font-size: 10px;
+    letter-spacing: 0.2em; background: rgba(212,165,116,0.1);
+    border: 1px solid rgba(212,165,116,0.4); color: #d4a574;
+    padding: 2px 6px; border-radius: 4px; outline: none;
+    text-transform: uppercase; font-weight: 600;
+    max-width: 200px;
+  }
+
+  .sc-remove-row, .sc-remove-item {
+    background: transparent; border: none;
+    color: rgba(232,228,216,0.25); cursor: pointer;
+    padding: 4px; border-radius: 4px; opacity: 0;
+    transition: all 0.2s ease;
+    display: inline-flex; align-items: center;
+  }
+  .sc-row:hover .sc-remove-row { opacity: 1; }
+  .sc-item:hover .sc-remove-item { opacity: 1; }
+  .sc-remove-row:hover, .sc-remove-item:hover {
+    color: #d97a6c; background: rgba(217,122,108,0.1);
+  }
+
+  .sc-items {
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+  }
+  .sc-item {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 13px; color: var(--fg);
+    background: rgba(232,228,216,0.06);
+    border: 1px solid rgba(232,228,216,0.1);
+    padding: 5px 4px 5px 11px; border-radius: 999px;
+    cursor: pointer; transition: all 0.2s ease;
+    letter-spacing: -0.005em;
+  }
+  .sc-item:hover {
+    background: rgba(232,228,216,0.1);
+    border-color: rgba(232,228,216,0.2);
+  }
+  .sc-item-input {
+    font-family: var(--sf-display); font-size: 13px;
+    background: rgba(255,255,255,0.08); border: 1px solid rgba(212,165,116,0.4);
+    color: var(--fg); padding: 5px 11px; border-radius: 999px; outline: none;
+    width: 140px;
+  }
+  .sc-add-item {
+    background: transparent; border: 1px dashed rgba(232,228,216,0.2);
+    color: rgba(232,228,216,0.5); cursor: pointer;
+    width: 28px; height: 28px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: all 0.2s ease;
+  }
+  .sc-add-item:hover {
+    color: var(--accent); border-color: rgba(212,165,116,0.5);
+    background: rgba(212,165,116,0.08);
+  }
+
   /* Inline SVG icons */
   .icon { width: 16px; height: 16px; flex-shrink: 0; }
   .icon-sm { width: 12px; height: 12px; }
@@ -312,6 +461,7 @@
   <symbol id="i-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
   <symbol id="i-chev-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></symbol>
   <symbol id="i-chev-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></symbol>
+  <symbol id="i-grip" viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></symbol>
 </svg>
 
 <script>
@@ -366,11 +516,16 @@ const state = {
   isRunning: false,
   hasStarted: false,
   muted: false,
-  manualIdx: null, // when set, overrides "first active" as the displayed task
+  manualIdx: null,
   // edit state
   editingNameIdx: null,
   editingLocationIdx: null,
   editingSub: { taskIdx: null, subIdx: null },
+  // Suitcase sections — Red suitcase, top-down
+  suitcaseRows: [
+    { name: "Row 1", items: ["Contact lenses"] },
+  ],
+  editingSuitcaseRow: null, // { rowIdx, itemIdx } or { rowIdx, itemIdx: -1 } for row name
 };
 
 // refs
@@ -636,11 +791,62 @@ function addTask() {
   render();
 }
 
+function quickAddTask(name) {
+  const trimmed = (name || '').trim();
+  if (!trimmed) return;
+  const newId = state.nextId++;
+  state.tasks.push({ type: 'item', name: trimmed, location: "" });
+  state.ids.push(newId);
+  render();
+  // Re-focus the quick-add input
+  setTimeout(() => {
+    const el = document.getElementById('quick-add');
+    if (el) el.focus();
+  }, 0);
+}
+
+function reorderTask(fromIdx, toIdx) {
+  if (fromIdx === toIdx) return;
+  // Move task and id together
+  const [movedTask] = state.tasks.splice(fromIdx, 1);
+  const [movedId] = state.ids.splice(fromIdx, 1);
+  // Adjust target index if moving downward
+  const insertAt = fromIdx < toIdx ? toIdx - 1 : toIdx;
+  state.tasks.splice(insertAt, 0, movedTask);
+  state.ids.splice(insertAt, 0, movedId);
+  // Clear any manual nav so getCurrent re-picks the first active task
+  state.manualIdx = null;
+  render();
+}
+
 function removeTask(idx) {
   const removedId = state.ids[idx];
   state.tasks.splice(idx, 1);
   state.ids.splice(idx, 1);
   state.completedIds = state.completedIds.filter(x => x !== removedId);
+  render();
+}
+
+// ---- Suitcase row helpers ----
+function addSuitcaseRow() {
+  const n = state.suitcaseRows.length + 1;
+  state.suitcaseRows.push({ name: `Row ${n}`, items: [] });
+  state.editingSuitcaseRow = { rowIdx: state.suitcaseRows.length - 1, itemIdx: -1 };
+  render();
+}
+function removeSuitcaseRow(ri) {
+  state.suitcaseRows.splice(ri, 1);
+  state.editingSuitcaseRow = null;
+  render();
+}
+function addSuitcaseItem(ri) {
+  state.suitcaseRows[ri].items.push("");
+  state.editingSuitcaseRow = { rowIdx: ri, itemIdx: state.suitcaseRows[ri].items.length - 1 };
+  render();
+}
+function removeSuitcaseItem(ri, ii) {
+  state.suitcaseRows[ri].items.splice(ii, 1);
+  state.editingSuitcaseRow = null;
   render();
 }
 
@@ -661,8 +867,11 @@ function renderTaskRow(task, idx, isCurrent, isDone) {
   const isEditingLoc = state.editingLocationIdx === idx;
   const isGroup = task.type === 'group';
 
-  let html = `<div class="task-item ${isCurrent ? 'task-current' : isDone ? 'task-done' : 'task-pending'}" data-idx="${idx}">`;
+  let html = `<div class="task-item ${isCurrent ? 'task-current' : isDone ? 'task-done' : 'task-pending'}" data-idx="${idx}" draggable="true">`;
   html += `<div class="task-main-row">`;
+
+  // Drag handle
+  html += `<div class="drag-handle" title="Drag to reorder" aria-hidden="true"><svg width="16" height="16"><use href="#i-grip"/></svg></div>`;
 
   // Check circle
   html += `<div class="check-circle ${isDone ? 'done' : isCurrent ? 'current' : ''}" data-action="toggle-task" data-idx="${idx}" title="Toggle done">`;
@@ -727,81 +936,75 @@ function renderTaskRow(task, idx, isCurrent, isDone) {
 }
 
 function renderSuitcase() {
+  let rowsHtml = '';
+  state.suitcaseRows.forEach((row, ri) => {
+    const isEditingName = state.editingSuitcaseRow &&
+      state.editingSuitcaseRow.rowIdx === ri &&
+      state.editingSuitcaseRow.itemIdx === -1;
+
+    rowsHtml += `<div class="sc-row">`;
+
+    // Row header
+    rowsHtml += `<div class="sc-row-header">`;
+    if (isEditingName) {
+      rowsHtml += `<input autofocus class="sc-row-name-input" data-action="edit-sc-row-name" data-row="${ri}" value="${escapeHtml(row.name)}" placeholder="row name" />`;
+    } else {
+      rowsHtml += `<span class="sc-row-name" data-action="start-edit-sc-row-name" data-row="${ri}" title="Click to edit row name">${escapeHtml(row.name) || 'untitled row'}</span>`;
+    }
+    rowsHtml += `<button class="sc-remove-row" data-action="remove-sc-row" data-row="${ri}" title="Remove row">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>`;
+    rowsHtml += `</div>`;
+
+    // Items
+    rowsHtml += `<div class="sc-items">`;
+    row.items.forEach((item, ii) => {
+      const isEditingItem = state.editingSuitcaseRow &&
+        state.editingSuitcaseRow.rowIdx === ri &&
+        state.editingSuitcaseRow.itemIdx === ii;
+      if (isEditingItem) {
+        rowsHtml += `<input autofocus class="sc-item-input" data-action="edit-sc-item" data-row="${ri}" data-item="${ii}" value="${escapeHtml(item)}" placeholder="item" />`;
+      } else {
+        rowsHtml += `<span class="sc-item" data-action="start-edit-sc-item" data-row="${ri}" data-item="${ii}" title="Click to edit">
+          ${escapeHtml(item) || '<em style="opacity:0.4">untitled</em>'}
+          <button class="sc-remove-item" data-action="remove-sc-item" data-row="${ri}" data-item="${ii}" title="Remove">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </span>`;
+      }
+    });
+    rowsHtml += `<button class="sc-add-item" data-action="add-sc-item" data-row="${ri}" title="Add item">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>`;
+    rowsHtml += `</div>`;
+
+    rowsHtml += `</div>`;
+  });
+
   return `
     <div class="suitcase-section">
-      <div class="list-label" style="margin-bottom:14px;padding-left:4px">SUITCASE LAYOUT</div>
-      <svg class="suitcase-svg" viewBox="0 0 320 520" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#a23a3a"/>
-            <stop offset="1" stop-color="#7a2828"/>
-          </linearGradient>
-          <linearGradient id="shg" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#2a2f3a"/>
-            <stop offset="1" stop-color="#1a1f2a"/>
-          </linearGradient>
-        </defs>
-
-        <rect x="40" y="20" width="240" height="220" rx="6" fill="url(#shg)" stroke="rgba(232,228,216,0.18)" stroke-width="1.5"/>
-        <text x="160" y="14" text-anchor="middle" font-size="9" fill="#d4a574" font-family="ui-monospace, monospace" letter-spacing="3">SHELF ORGANIZER</text>
-
-        <rect x="48" y="32" width="224" height="62" rx="4" fill="rgba(212,165,116,0.06)" stroke="rgba(212,165,116,0.3)" stroke-width="1"/>
-        <text x="56" y="48" font-size="10" fill="#d4a574" font-family="ui-monospace, monospace" letter-spacing="1.5" font-weight="600">SHELF 1 — TOP</text>
-        <text x="56" y="64" font-size="11" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Meds · Mints · Zofran</text>
-        <text x="56" y="80" font-size="11" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Supplements · Xanax</text>
-
-        <rect x="48" y="100" width="224" height="62" rx="4" fill="rgba(212,165,116,0.06)" stroke="rgba(212,165,116,0.3)" stroke-width="1"/>
-        <text x="56" y="116" font-size="10" fill="#d4a574" font-family="ui-monospace, monospace" letter-spacing="1.5" font-weight="600">SHELF 2 — MIDDLE</text>
-        <text x="56" y="132" font-size="11" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Teas · Kettle · Peppermint</text>
-        <text x="56" y="148" font-size="11" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Olive leaf key</text>
-
-        <rect x="48" y="168" width="224" height="62" rx="4" fill="rgba(212,165,116,0.06)" stroke="rgba(212,165,116,0.3)" stroke-width="1"/>
-        <text x="56" y="184" font-size="10" fill="#d4a574" font-family="ui-monospace, monospace" letter-spacing="1.5" font-weight="600">SHELF 3 — BOTTOM</text>
-        <text x="56" y="200" font-size="11" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Snacks · Taro chips · Bars</text>
-        <text x="56" y="216" font-size="11" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Wooden forks · Bowls</text>
-
-        <line x1="160" y1="240" x2="160" y2="258" stroke="rgba(232,228,216,0.2)" stroke-width="1" stroke-dasharray="2,3"/>
-
-        <rect x="30" y="260" width="260" height="240" rx="14" fill="url(#sg)" stroke="rgba(232,228,216,0.15)" stroke-width="1.5"/>
-        <rect x="120" y="252" width="80" height="6" rx="2" fill="#0a0d14" opacity="0.6"/>
-        <rect x="146" y="268" width="28" height="10" rx="2" fill="rgba(232,228,216,0.6)"/>
-        <circle cx="160" cy="273" r="1.5" fill="#0a0d14"/>
-        <rect x="46" y="284" width="228" height="14" rx="2" fill="rgba(232,228,216,0.85)"/>
-        ${['A','B','C','D','E','F','G'].map((l,i) => `<text x="${56 + i*32}" y="294" font-size="9" fill="#1a1f2e" font-family="ui-monospace, monospace" font-weight="700">${l}</text>`).join('')}
-
-        <rect x="60" y="320" width="200" height="160" rx="6" fill="rgba(0,0,0,0.18)" stroke="rgba(232,228,216,0.12)" stroke-width="1"/>
-        <line x1="160" y1="320" x2="160" y2="480" stroke="rgba(232,228,216,0.12)" stroke-width="1" stroke-dasharray="3,3"/>
-        <line x1="60" y1="400" x2="260" y2="400" stroke="rgba(232,228,216,0.12)" stroke-width="1" stroke-dasharray="3,3"/>
-
-        <text x="110" y="346" text-anchor="middle" font-size="9" fill="#d4a574" font-family="ui-monospace, monospace" letter-spacing="1.2" font-weight="600">FRONT-L</text>
-        <text x="110" y="362" text-anchor="middle" font-size="10" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Diapers</text>
-        <text x="110" y="376" text-anchor="middle" font-size="10" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Waters ×4</text>
-
-        <text x="210" y="346" text-anchor="middle" font-size="9" fill="#d4a574" font-family="ui-monospace, monospace" letter-spacing="1.2" font-weight="600">FRONT-R</text>
-        <text x="210" y="362" text-anchor="middle" font-size="10" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">ID + cards</text>
-        <text x="210" y="376" text-anchor="middle" font-size="10" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Redwood keys</text>
-
-        <text x="110" y="426" text-anchor="middle" font-size="9" fill="#d4a574" font-family="ui-monospace, monospace" letter-spacing="1.2" font-weight="600">BACK-L</text>
-        <text x="110" y="442" text-anchor="middle" font-size="10" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Kitchen</text>
-        <text x="110" y="456" text-anchor="middle" font-size="10" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">stuff</text>
-
-        <text x="210" y="426" text-anchor="middle" font-size="9" fill="#d4a574" font-family="ui-monospace, monospace" letter-spacing="1.2" font-weight="600">BACK-R</text>
-        <text x="210" y="442" text-anchor="middle" font-size="10" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">Fanny pack</text>
-        <text x="210" y="456" text-anchor="middle" font-size="10" fill="#e8e4d8" font-family="-apple-system, system-ui" font-weight="500">+ massager</text>
-
-        <circle cx="60" cy="500" r="8" fill="#0a0d14" stroke="rgba(232,228,216,0.2)" stroke-width="1"/>
-        <circle cx="260" cy="500" r="8" fill="#0a0d14" stroke="rgba(232,228,216,0.2)" stroke-width="1"/>
-        <circle cx="60" cy="500" r="3" fill="rgba(232,228,216,0.3)"/>
-        <circle cx="260" cy="500" r="3" fill="rgba(232,228,216,0.3)"/>
-
-        <rect x="30" y="260" width="260" height="240" rx="14" fill="none" stroke="rgba(0,0,0,0.3)" stroke-width="1" stroke-dasharray="2,4" opacity="0.5"/>
-      </svg>
-      <div class="footer-hint" style="margin-top:8px">VISUAL REFERENCE</div>
+      <div class="suitcase-header">
+        <div class="suitcase-title">RED SUITCASE</div>
+        <button class="add-btn" data-action="add-sc-row">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          ADD ROW
+        </button>
+      </div>
+      <div class="suitcase-body">
+        ${rowsHtml}
+      </div>
     </div>
   `;
 }
 
 function render() {
+  // Preserve quick-add input value & focus across re-renders
+  const qaPrev = document.getElementById('quick-add');
+  const qaValue = qaPrev ? qaPrev.value : '';
+  const qaHadFocus = qaPrev && document.activeElement === qaPrev;
+  const qaSelStart = qaHadFocus ? qaPrev.selectionStart : null;
+  const qaSelEnd = qaHadFocus ? qaPrev.selectionEnd : null;
+
   const { active, done } = getOrder();
   const cur = getCurrent();
   const isAllDone = !cur;
@@ -872,6 +1075,15 @@ function render() {
         <div class="list-label">TASKS</div>
         <button class="add-btn" data-action="add-task">${icon('plus', 11)} ADD</button>
       </div>
+      <div class="quick-add-wrap">
+        <div class="quick-add-plus">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </div>
+        <input type="text" class="quick-add-input" id="quick-add"
+          placeholder="Type a new task and press Enter…"
+          autocomplete="off"
+        />
+      </div>
   `;
   active.forEach((entry, i) => {
     listHtml += renderTaskRow(state.tasks[entry.idx], entry.idx, i === 0, false);
@@ -924,6 +1136,26 @@ function render() {
     const el = document.querySelector(`input.sub-item-input[data-idx="${state.editingSub.taskIdx}"][data-sub="${state.editingSub.subIdx}"]`);
     if (el) { el.focus(); el.select(); }
   }
+  if (state.editingSuitcaseRow) {
+    const { rowIdx, itemIdx } = state.editingSuitcaseRow;
+    let el;
+    if (itemIdx === -1) {
+      el = document.querySelector(`input.sc-row-name-input[data-row="${rowIdx}"]`);
+    } else {
+      el = document.querySelector(`input.sc-item-input[data-row="${rowIdx}"][data-item="${itemIdx}"]`);
+    }
+    if (el) { el.focus(); el.select(); }
+  }
+
+  // Restore quick-add input state
+  const qa = document.getElementById('quick-add');
+  if (qa) {
+    qa.value = qaValue;
+    if (qaHadFocus) {
+      qa.focus();
+      try { qa.setSelectionRange(qaSelStart, qaSelEnd); } catch {}
+    }
+  }
 }
 
 // ---- Event delegation ----
@@ -972,6 +1204,27 @@ document.addEventListener('click', (e) => {
     case 'next-task':
       if (target.getAttribute('aria-disabled') !== 'true') goToNextTask();
       break;
+    case 'add-sc-row': addSuitcaseRow(); break;
+    case 'remove-sc-row':
+      e.stopPropagation();
+      removeSuitcaseRow(parseInt(target.dataset.row, 10));
+      break;
+    case 'add-sc-item': addSuitcaseItem(parseInt(target.dataset.row, 10)); break;
+    case 'remove-sc-item':
+      e.stopPropagation();
+      removeSuitcaseItem(parseInt(target.dataset.row, 10), parseInt(target.dataset.item, 10));
+      break;
+    case 'start-edit-sc-row-name':
+      state.editingSuitcaseRow = { rowIdx: parseInt(target.dataset.row, 10), itemIdx: -1 };
+      render();
+      break;
+    case 'start-edit-sc-item':
+      state.editingSuitcaseRow = {
+        rowIdx: parseInt(target.dataset.row, 10),
+        itemIdx: parseInt(target.dataset.item, 10),
+      };
+      render();
+      break;
   }
 });
 
@@ -989,6 +1242,13 @@ document.addEventListener('input', (e) => {
     state.tasks[idx].location = val;
   } else if (target.dataset.action === 'edit-sub') {
     state.tasks[idx].items[sub].name = val;
+  } else if (target.dataset.action === 'edit-sc-row-name') {
+    const ri = parseInt(target.dataset.row, 10);
+    state.suitcaseRows[ri].name = val;
+  } else if (target.dataset.action === 'edit-sc-item') {
+    const ri = parseInt(target.dataset.row, 10);
+    const ii = parseInt(target.dataset.item, 10);
+    state.suitcaseRows[ri].items[ii] = val;
   }
   // Don't re-render on every keystroke — preserves focus/cursor
 });
@@ -1005,6 +1265,9 @@ document.addEventListener('blur', (e) => {
   } else if (target.dataset.action === 'edit-sub') {
     state.editingSub = { taskIdx: null, subIdx: null };
     render();
+  } else if (target.dataset.action === 'edit-sc-row-name' || target.dataset.action === 'edit-sc-item') {
+    state.editingSuitcaseRow = null;
+    render();
   }
 }, true);
 
@@ -1012,7 +1275,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key !== 'Enter' && e.key !== 'Escape') return;
   const target = e.target;
   if (!target.dataset || !target.dataset.action) return;
-  if (['edit-name','edit-location','edit-sub'].includes(target.dataset.action)) {
+  if (['edit-name','edit-location','edit-sub','edit-sc-row-name','edit-sc-item'].includes(target.dataset.action)) {
     target.blur();
   }
 });
@@ -1046,6 +1309,80 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     handleRepeat();
   }
+});
+
+// Quick-add input — submit on Enter
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  if (e.target && e.target.id === 'quick-add') {
+    e.preventDefault();
+    const val = e.target.value;
+    e.target.value = '';
+    quickAddTask(val);
+  }
+});
+
+// ---- Drag and drop ----
+let dragSrcIdx = null;
+
+// Only allow drag start when initiated from the drag handle
+document.addEventListener('mousedown', (e) => {
+  const handle = e.target.closest && e.target.closest('.drag-handle');
+  const item = e.target.closest && e.target.closest('.task-item');
+  if (!item) return;
+  // If clicking inside the row but NOT on the handle, disable dragging for this gesture
+  if (handle) {
+    item.setAttribute('draggable', 'true');
+  } else {
+    item.setAttribute('draggable', 'false');
+  }
+});
+
+document.addEventListener('dragstart', (e) => {
+  const item = e.target.closest && e.target.closest('.task-item');
+  if (!item) return;
+  if (e.target.tagName === 'INPUT') { e.preventDefault(); return; }
+  // Only drag if draggable is currently true (set by handle mousedown)
+  if (item.getAttribute('draggable') !== 'true') { e.preventDefault(); return; }
+  dragSrcIdx = parseInt(item.dataset.idx, 10);
+  item.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  try { e.dataTransfer.setData('text/plain', String(dragSrcIdx)); } catch {}
+});
+
+document.addEventListener('dragend', (e) => {
+  document.querySelectorAll('.task-item').forEach(el => {
+    el.classList.remove('dragging', 'drag-over-top', 'drag-over-bottom');
+  });
+  dragSrcIdx = null;
+});
+
+document.addEventListener('dragover', (e) => {
+  const item = e.target.closest && e.target.closest('.task-item');
+  if (!item) return;
+  if (dragSrcIdx === null) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  // Visual indicator on hover position (top or bottom half)
+  document.querySelectorAll('.task-item').forEach(el => {
+    el.classList.remove('drag-over-top', 'drag-over-bottom');
+  });
+  const rect = item.getBoundingClientRect();
+  const after = (e.clientY - rect.top) > rect.height / 2;
+  item.classList.add(after ? 'drag-over-bottom' : 'drag-over-top');
+});
+
+document.addEventListener('drop', (e) => {
+  const item = e.target.closest && e.target.closest('.task-item');
+  if (!item || dragSrcIdx === null) return;
+  e.preventDefault();
+  const targetIdx = parseInt(item.dataset.idx, 10);
+  const rect = item.getBoundingClientRect();
+  const after = (e.clientY - rect.top) > rect.height / 2;
+  // Calculate insertion target: after = insert at targetIdx + 1
+  let toIdx = after ? targetIdx + 1 : targetIdx;
+  reorderTask(dragSrcIdx, toIdx);
+  dragSrcIdx = null;
 });
 
 // initial render
